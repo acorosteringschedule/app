@@ -124,6 +124,22 @@ export default function SettingsTab() {
             </div>
           </div>
           <div>
+            <label className="text-xs mono uppercase tracking-wider">Gambar Dashboard</label>
+            <p className="text-[11px] text-muted-foreground mt-1">Gambar ini tampil di banner dashboard utama.</p>
+            <div className="mt-2 space-y-2">
+              {form.hero_image_base64 && (
+                <img src={form.hero_image_base64} alt="Preview gambar dashboard" className="w-full h-28 rounded-lg object-cover border" />
+              )}
+              <div className="flex items-center gap-2">
+                <label className="inline-flex items-center gap-2 px-3 h-10 rounded-md border cursor-pointer text-sm hover:bg-accent">
+                  <UploadIcon size={14} /> Upload gambar
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files[0] && uploadImg("hero_image_base64", e.target.files[0])} />
+                </label>
+                {form.hero_image_base64 && <Button variant="ghost" size="sm" onClick={() => setForm({ ...form, hero_image_base64: null })}>Hapus</Button>}
+              </div>
+            </div>
+          </div>
+          <div>
             <label className="text-xs mono uppercase tracking-wider">Tanda Tangan</label>
             <div className="flex items-center gap-3 mt-2">
               {form.signature_base64 && <img src={form.signature_base64} alt="" className="h-16 rounded-lg object-contain bg-white p-1 border" />}
