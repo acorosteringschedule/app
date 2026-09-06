@@ -24,7 +24,7 @@ export default function Dashboard() {
         {tab === "pengajuan" && user.role === "admin" && <RequestsTab mine={false} />}
         {tab === "pengajuan-saya" && <RequestsTab mine={true} />}
         {tab === "kalender-saya" && <MyCalendar />}
-        {tab === "ringkasan" && user.role === "admin" && <SummaryTab />}
+        {tab === "ringkasan" && <SummaryTab />}
         {tab === "riwayat" && user.role === "admin" && <HistoryTab />}
         {tab === "pengaturan" && user.role === "admin" && <SettingsTab />}
       </main>
