@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, CheckCircle2, XCircle, UserCog, FileSpreadsheet } from "lucide-react";
+import { Plus, Pencil, Trash2, CheckCircle2, XCircle, UserCog, FileSpreadsheet, Download } from "lucide-react";
 
 const empty = { nik: "", name: "", email: "", role: "personil", active: true };
 
@@ -32,6 +32,17 @@ export default function PersonnelTab() {
 
   const openNew = () => { setForm(empty); setEditingId(null); setOpen(true); };
   const openEdit = (u) => { setForm({ nik: u.nik, name: u.name, email: u.email, role: u.role, active: u.active }); setEditingId(u.id); setOpen(true); };
+
+  const downloadTemplate = () => {
+    const sheet = XLSX.utils.aoa_to_sheet([
+      ["NIK", "Nama", "Email"],
+      ["", "", ""],
+    ]);
+    sheet["!cols"] = [{ wch: 18 }, { wch: 30 }, { wch: 32 }];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, sheet, "Personil");
+    XLSX.writeFile(workbook, "template_personil.xlsx");
+  };
 
   const importExcel = async (file) => {
     setImporting(true);
@@ -132,6 +143,9 @@ export default function PersonnelTab() {
           <p className="text-xs mono uppercase tracking-widest text-muted-foreground mt-1">{users.length} orang · seret di tab jadwal untuk mengubah urutan</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={downloadTemplate} className="gap-2">
+            <Download size={16} /> Template Excel
+          </Button>
           <label className="inline-flex items-center gap-2 px-3 h-10 rounded-md border cursor-pointer text-sm hover:bg-accent">
             <FileSpreadsheet size={16} /> {importing ? "Mengimpor..." : "Import Excel"}
             <input
