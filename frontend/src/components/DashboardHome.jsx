@@ -46,6 +46,7 @@ function ShiftMiniCard({ label, count, icon: Icon, color, timeRange }) {
 export default function DashboardHome() {
   const { user } = useAuth();
   const { settings } = useSettings();
+  const [heroRatio, setHeroRatio] = useState(null);
   const [stats, setStats] = useState(null);
   const [workload, setWorkload] = useState([]);
 
@@ -70,22 +71,27 @@ export default function DashboardHome() {
 
   const today = new Date();
   const todayLabel = today.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).toUpperCase();
+  const hasHeroImage = Boolean(settings.hero_image_base64);
 
   return (
     <div className="space-y-6 fade-in">
       {/* Hero banner */}
-      <Card className="relative overflow-hidden border-2 p-0 min-h-[220px] sm:min-h-[280px] lg:min-h-[320px] bg-black" style={{ background: "#000000" }}>
-        {settings.hero_image_base64 && (
+      <Card
+        className={`relative overflow-hidden border-2 p-0 bg-black ${hasHeroImage ? "" : "min-h-[220px] sm:min-h-[280px] lg:min-h-[320px]"}`}
+        style={{ background: "#000000", ...(heroRatio ? { aspectRatio: heroRatio } : {}) }}
+      >
+        {hasHeroImage && (
           <img
             src={settings.hero_image_base64}
             alt=""
             className="absolute inset-0 w-full h-full object-contain"
+            onLoad={(event) => setHeroRatio(event.currentTarget.naturalWidth / event.currentTarget.naturalHeight)}
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/30 to-transparent" />
         <div className="absolute inset-0 grid-overlay opacity-30" />
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full blur-3xl opacity-30" style={{ background: "var(--accent-hex)" }} />
-        <div className="relative z-10 flex min-h-[220px] sm:min-h-[280px] lg:min-h-[320px] items-center p-6 sm:p-8 lg:p-10">
+        <div className={`relative z-10 flex items-center p-6 sm:p-8 lg:p-10 ${hasHeroImage ? "min-h-full" : "min-h-[220px] sm:min-h-[280px] lg:min-h-[320px]"}`}>
           <div className="flex-1">
             <div className="inline-flex items-center gap-2 text-[10px] mono uppercase tracking-[0.3em] text-white/70 mb-3">
               <Sparkles size={12} style={{ color: "var(--accent-hex)" }} /> {todayLabel}
