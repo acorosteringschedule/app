@@ -79,7 +79,7 @@ export default function DashboardHome() {
           <img
             src={settings.hero_image_base64}
             alt=""
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-contain"
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/30 to-transparent" />
