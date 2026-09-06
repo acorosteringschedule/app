@@ -56,7 +56,7 @@ export function SettingsProvider({ children }) {
     const isDark = localStorage.getItem("aco_theme") === "dark" ||
       (!localStorage.getItem("aco_theme") && mq.matches);
     document.documentElement.classList.toggle("dark", isDark);
-  }, [fetchSettings]);
+  }, [fetchSettings, fetchHolidays]);
 
   function applyPrimary(hex) {
     document.documentElement.style.setProperty("--accent-hex", hex);
