@@ -218,8 +218,25 @@ export default function ShiftScheduleTab() {
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.detail || "Import gagal");
-      toast.success(`Import berhasil: ${j.imported} sel`);
+      let msg = `Import berhasil: ${j.imported} sel diperbarui`;
+      if (j.unknown_niks?.length) msg += ` · ${j.unknown_niks.length} NIK tidak dikenal (${j.unknown_niks.slice(0,3).join(", ")}${j.unknown_niks.length>3?"…":""})`;
+      if (j.invalid_values?.length) msg += ` · ${j.invalid_values.length} nilai tidak valid dilewati`;
+      toast.success(msg, { duration: 6000 });
       load();
+    } catch (e) { toast.error(e.message); }
+  };
+
+  const downloadTemplate = async () => {
+    try {
+      const token = localStorage.getItem("aco_token");
+      const res = await fetch(`${API_BASE}/exports/xlsx-template?year=${year}&month=${month}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) throw new Error("Gagal mengunduh template");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `template_jadwal_${year}_${String(month).padStart(2,"0")}.xlsx`;
+      a.click(); URL.revokeObjectURL(url);
+      toast.success("Template diunduh · isi kode P/S/M/L/C/SK/DL/DK/PN lalu import kembali");
     } catch (e) { toast.error(e.message); }
   };
 
@@ -253,6 +270,7 @@ export default function ShiftScheduleTab() {
             <Button onClick={() => setOpenAuto(true)} className="gap-2 glow-btn text-white" style={{ background: "var(--accent-hex)" }} data-testid="auto-generate-shift-button">
               <Sparkles size={16} /> Auto-Generate
             </Button>
+            <Button variant="outline" className="gap-2" onClick={downloadTemplate} data-testid="download-template-button"><Download size={14} /> Template</Button>
             <label className="inline-flex items-center gap-2 px-3 h-9 rounded-md border cursor-pointer text-sm hover:bg-accent">
               <Upload size={14} /> Import Excel
               <input type="file" accept=".xlsx,.xls" className="hidden" data-testid="excel-import-file-input" onChange={(e) => e.target.files[0] && onImport(e.target.files[0])} />

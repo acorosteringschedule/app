@@ -557,7 +557,6 @@ async def import_excel(year: int, month: int, file: UploadFile = File(...), admi
     if not rows:
         raise HTTPException(400, "File kosong")
     header = rows[0]
-    # Expected: [NIK, Nama, 1, 2, 3, ..., N]
     day_cols = []
     for idx, h in enumerate(header):
         if h is None:
@@ -569,38 +568,132 @@ async def import_excel(year: int, month: int, file: UploadFile = File(...), admi
         except (ValueError, TypeError):
             pass
 
+    if not day_cols:
+        raise HTTPException(400, "Header tanggal (1..N) tidak ditemukan di baris pertama")
+
     users_by_nik = {u["nik"]: u for u in await db.users.find({"role": "personil"}).to_list(500)}
+    alias = {
+        "p": "pagi", "pagi": "pagi",
+        "s": "siang", "siang": "siang",
+        "m": "malam", "malam": "malam",
+        "l": "off", "libur": "off", "off": "off", "-": "off",
+        "c": "cuti", "cuti": "cuti",
+        "sk": "sakit", "sakit": "sakit",
+        "dl": "dinas_luar", "dinas_luar": "dinas_luar", "dinasluar": "dinas_luar",
+        "dk": "diklat", "diklat": "diklat",
+        "pn": "penugasan", "penugasan": "penugasan",
+    }
+
     imported = 0
-    valid_shifts = {"pagi", "siang", "malam", "off", "libur", "cuti", "sakit", "dinas_luar", "dl", "diklat", "penugasan"}
-    for row in rows[1:]:
+    unknown_niks = []
+    invalid_values = []
+    for r_idx, row in enumerate(rows[1:], start=2):
         if not row or not row[0]:
             continue
         nik = str(row[0]).strip()
         u = users_by_nik.get(nik)
         if not u:
+            unknown_niks.append(nik)
             continue
         for col_idx, day in day_cols:
             if col_idx >= len(row):
                 continue
             val = row[col_idx]
-            if val is None:
+            if val is None or (isinstance(val, str) and not val.strip()):
                 continue
-            s = str(val).strip().lower().replace(" ", "_")
-            if s == "libur":
-                s = "off"
-            if s == "dl":
-                s = "dinas_luar"
-            if s not in valid_shifts:
+            raw = str(val).strip().lower().replace(" ", "_")
+            shift = alias.get(raw)
+            if not shift:
+                invalid_values.append(f"baris {r_idx} hari {day}: '{val}'")
                 continue
             date = f"{year:04d}-{month:02d}-{day:02d}"
             await db.shifts.update_one(
                 {"user_id": u["id"], "date": date},
-                {"$set": {"user_id": u["id"], "date": date, "shift": s, "updated_at": now_utc().isoformat()}},
+                {"$set": {"user_id": u["id"], "date": date, "shift": shift, "updated_at": now_utc().isoformat()}},
                 upsert=True,
             )
             imported += 1
-    await log_change(admin, f"Import Excel jadwal {year}-{month:02d}: {imported} sel")
-    return {"ok": True, "imported": imported}
+    await log_change(admin, f"Import Excel jadwal {year}-{month:02d}: {imported} sel dari {file.filename}")
+    return {
+        "ok": True,
+        "imported": imported,
+        "unknown_niks": list(set(unknown_niks))[:20],
+        "invalid_values": invalid_values[:20],
+        "total_days_detected": len(day_cols),
+    }
+
+
+@api.get("/exports/xlsx-template")
+async def export_xlsx_template(year: int, month: int, admin: dict = Depends(require_admin)):
+    _, ndays = calendar.monthrange(year, month)
+    users = await db.users.find({"role": "personil", "active": True}, {"_id": 0}).sort("order_index", 1).to_list(500)
+
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f"Template-{year}-{month:02d}"
+
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="0B0D14", end_color="0B0D14", fill_type="solid")
+    weekend_fill = PatternFill(start_color="FEE2E2", end_color="FEE2E2", fill_type="solid")
+    thin = Side(border_style="thin", color="CBD5E1")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    center = Alignment(horizontal="center", vertical="center")
+
+    header = ["NIK", "Nama"] + [i for i in range(1, ndays + 1)]
+    ws.append(header)
+    for col_idx, cell in enumerate(ws[1], start=1):
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center
+        cell.border = border
+        if col_idx >= 3:
+            day = col_idx - 2
+            dow = datetime(year, month, day).weekday()
+            if dow >= 5:
+                cell.fill = weekend_fill
+                cell.font = Font(bold=True, color="B91C1C")
+
+    for u in users:
+        ws.append([u["nik"], u["name"]] + [""] * ndays)
+
+    ws.column_dimensions["A"].width = 12
+    ws.column_dimensions["B"].width = 24
+    for i in range(ndays):
+        col_letter = openpyxl.utils.get_column_letter(3 + i)
+        ws.column_dimensions[col_letter].width = 5
+
+    ws2 = wb.create_sheet("Panduan")
+    ws2["A1"] = "Kode Shift Valid"
+    ws2["A1"].font = Font(bold=True, size=14)
+    legend = [
+        ("Kode", "Arti"),
+        ("P atau pagi", "Shift Pagi (07:00-13:00)"),
+        ("S atau siang", "Shift Siang (13:00-19:00)"),
+        ("M atau malam", "Shift Malam (19:00-07:00)"),
+        ("L atau libur / off", "Libur / Off"),
+        ("C atau cuti", "Cuti"),
+        ("SK atau sakit", "Sakit"),
+        ("DL atau dinas_luar", "Dinas Luar"),
+        ("DK atau diklat", "Diklat"),
+        ("PN atau penugasan", "Penugasan"),
+    ]
+    for row in legend:
+        ws2.append(list(row))
+    ws2.column_dimensions["A"].width = 22
+    ws2.column_dimensions["B"].width = 40
+    for cell in ws2[2]:
+        cell.font = Font(bold=True)
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="template_jadwal_{year}_{month:02d}.xlsx"'},
+    )
 
 
 # ---------- Requests (Cuti / Sakit / etc) ----------
