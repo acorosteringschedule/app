@@ -49,7 +49,7 @@ export default function PersonnelTab() {
     try {
       const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: "", raw: false });
       const seen = new Set();
       const records = rows.map((row) => {
         const normalized = Object.fromEntries(Object.entries(row).map(([key, value]) => [
@@ -58,7 +58,7 @@ export default function PersonnelTab() {
         const nik = String(normalized.nik || "").trim();
         const name = String(normalized.nama || normalized.namalengkap || normalized.name || "").trim();
         const email = String(normalized.email || "").trim();
-        return { nik, name, email };
+        return email ? { nik, name, email } : { nik, name };
       }).filter((row) => row.nik || row.name);
 
       const valid = records.filter((row) => {
@@ -69,16 +69,22 @@ export default function PersonnelTab() {
       const skipped = records.length - valid.length;
       let success = 0;
       let failed = 0;
+      const failures = [];
       for (const row of valid) {
         try {
           await api.post("/users", { ...row, role: "personil", active: true });
           success += 1;
-        } catch {
+        } catch (e) {
           failed += 1;
+          failures.push(`${row.nik}: ${formatApiError(e)}`);
         }
       }
       await load();
-      toast.success(`Import selesai: ${success} berhasil, ${failed + skipped} dilewati/gagal`);
+      if (failed || skipped) {
+        toast.warning(`Import selesai: ${success} berhasil, ${failed + skipped} dilewati/gagal${failures.length ? ` (${failures.slice(0, 2).join(" | ")})` : ""}`);
+      } else {
+        toast.success(`Import selesai: ${success} personil berhasil ditambahkan`);
+      }
     } catch (e) {
       toast.error(`File Excel tidak dapat dibaca: ${formatApiError(e)}`);
     } finally {
