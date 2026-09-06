@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import * as XLSX from "xlsx";
 import { api, formatApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, CheckCircle2, XCircle, UserCog } from "lucide-react";
+import { Plus, Pencil, Trash2, CheckCircle2, XCircle, UserCog, FileSpreadsheet } from "lucide-react";
 
 const empty = { nik: "", name: "", email: "", role: "personil", active: true };
 
@@ -16,6 +17,7 @@ export default function PersonnelTab() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(empty);
   const [editingId, setEditingId] = useState(null);
+  const [importing, setImporting] = useState(false);
 
   const load = async () => {
     const [u, p] = await Promise.all([
@@ -30,6 +32,48 @@ export default function PersonnelTab() {
 
   const openNew = () => { setForm(empty); setEditingId(null); setOpen(true); };
   const openEdit = (u) => { setForm({ nik: u.nik, name: u.name, email: u.email, role: u.role, active: u.active }); setEditingId(u.id); setOpen(true); };
+
+  const importExcel = async (file) => {
+    setImporting(true);
+    try {
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+      const seen = new Set();
+      const records = rows.map((row) => {
+        const normalized = Object.fromEntries(Object.entries(row).map(([key, value]) => [
+          key.toString().toLowerCase().replace(/[^a-z0-9]/g, ""), value,
+        ]));
+        const nik = String(normalized.nik || "").trim();
+        const name = String(normalized.nama || normalized.namalengkap || normalized.name || "").trim();
+        const email = String(normalized.email || "").trim();
+        return { nik, name, email };
+      }).filter((row) => row.nik || row.name);
+
+      const valid = records.filter((row) => {
+        if (!row.nik || !row.name || seen.has(row.nik)) return false;
+        seen.add(row.nik);
+        return true;
+      });
+      const skipped = records.length - valid.length;
+      let success = 0;
+      let failed = 0;
+      for (const row of valid) {
+        try {
+          await api.post("/users", { ...row, role: "personil", active: true });
+          success += 1;
+        } catch {
+          failed += 1;
+        }
+      }
+      await load();
+      toast.success(`Import selesai: ${success} berhasil, ${failed + skipped} dilewati/gagal`);
+    } catch (e) {
+      toast.error(`File Excel tidak dapat dibaca: ${formatApiError(e)}`);
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const submit = async () => {
     try {
@@ -87,10 +131,23 @@ export default function PersonnelTab() {
           <h3 className="font-display text-xl font-semibold">Daftar Personil</h3>
           <p className="text-xs mono uppercase tracking-widest text-muted-foreground mt-1">{users.length} orang · seret di tab jadwal untuk mengubah urutan</p>
         </div>
-        <Button onClick={openNew} className="gap-2 glow-btn text-white" style={{ background: "var(--accent-hex)" }} data-testid="add-personnel-button">
-          <Plus size={16} /> Tambah Personil
-        </Button>
+        <div className="flex items-center gap-2">
+          <label className="inline-flex items-center gap-2 px-3 h-10 rounded-md border cursor-pointer text-sm hover:bg-accent">
+            <FileSpreadsheet size={16} /> {importing ? "Mengimpor..." : "Import Excel"}
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              className="hidden"
+              disabled={importing}
+              onChange={(e) => { if (e.target.files[0]) importExcel(e.target.files[0]); e.target.value = ""; }}
+            />
+          </label>
+          <Button onClick={openNew} className="gap-2 glow-btn text-white" style={{ background: "var(--accent-hex)" }} data-testid="add-personnel-button">
+            <Plus size={16} /> Tambah Personil
+          </Button>
+        </div>
       </div>
+      <p className="text-xs text-muted-foreground">Format Excel: kolom <span className="mono">NIK</span> dan <span className="mono">Nama</span> wajib; <span className="mono">Email</span> opsional. Password awal personil sama dengan NIK.</p>
 
       <div className="rounded-xl border bg-card overflow-hidden">
         <table className="w-full text-sm">
