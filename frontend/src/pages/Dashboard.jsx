@@ -18,7 +18,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background">
       <AppHeader activeTab={tab} onTab={setTab} />
       <main className="max-w-[1600px] mx-auto px-6 py-8">
-        {tab === "dashboard" && user.role === "admin" && <DashboardHome />}
+        {tab === "dashboard" && <DashboardHome />}
         {tab === "jadwal" && <ShiftScheduleTab />}
         {tab === "personil" && user.role === "admin" && <PersonnelTab />}
         {tab === "pengajuan" && user.role === "admin" && <RequestsTab mine={false} />}
