@@ -74,10 +74,18 @@ export default function DashboardHome() {
   return (
     <div className="space-y-6 fade-in">
       {/* Hero banner */}
-      <Card className="relative overflow-hidden border-2 p-0" style={{ background: "linear-gradient(135deg, #0B0D14 0%, #0F1626 60%, #0A1930 100%)" }}>
+      <Card className="relative overflow-hidden border-2 p-0 min-h-[220px] sm:min-h-[280px] lg:min-h-[320px]" style={{ background: "linear-gradient(135deg, #0B0D14 0%, #0F1626 60%, #0A1930 100%)" }}>
+        {settings.hero_image_base64 && (
+          <img
+            src={settings.hero_image_base64}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/20" />
         <div className="absolute inset-0 grid-overlay opacity-30" />
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full blur-3xl opacity-30" style={{ background: "var(--accent-hex)" }} />
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-6 p-8">
+        <div className="relative z-10 flex min-h-[220px] sm:min-h-[280px] lg:min-h-[320px] items-center p-6 sm:p-8 lg:p-10">
           <div className="flex-1">
             <div className="inline-flex items-center gap-2 text-[10px] mono uppercase tracking-[0.3em] text-white/70 mb-3">
               <Sparkles size={12} style={{ color: "var(--accent-hex)" }} /> {todayLabel}
@@ -87,9 +95,6 @@ export default function DashboardHome() {
             </h1>
             {settings.subtitle && <p className="mt-3 text-white/70 text-sm sm:text-base max-w-2xl">{settings.subtitle}</p>}
           </div>
-          {settings.hero_image_base64 && (
-            <img src={settings.hero_image_base64} alt="" className="w-full md:w-64 h-40 rounded-xl object-cover shadow-xl border-2 border-white/10" />
-          )}
         </div>
       </Card>
 
