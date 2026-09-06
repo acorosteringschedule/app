@@ -74,12 +74,12 @@ export default function DashboardHome() {
   return (
     <div className="space-y-6 fade-in">
       {/* Hero banner */}
-      <Card className="relative overflow-hidden border-2 p-0 min-h-[220px] sm:min-h-[280px] lg:min-h-[320px]" style={{ background: "linear-gradient(135deg, #0B0D14 0%, #0F1626 60%, #0A1930 100%)" }}>
+      <Card className="relative overflow-hidden border-2 p-0 min-h-[220px] sm:min-h-[280px] lg:min-h-[320px] bg-black" style={{ background: "#000000" }}>
         {settings.hero_image_base64 && (
           <img
             src={settings.hero_image_base64}
             alt=""
-            className="absolute inset-0 w-full h-full object-fill"
+            className="absolute inset-0 w-full h-full object-contain"
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/30 to-transparent" />

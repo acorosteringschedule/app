@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Save, Upload as UploadIcon, Palette, CalendarPlus, Trash2, CalendarDays } from "lucide-react";
 import { ID_HOLIDAYS } from "@/lib/holidays";
+import { removeWhiteBackground } from "@/lib/image";
 
 async function fileToBase64(file) {
   return new Promise((res, rej) => {
@@ -31,7 +32,8 @@ export default function SettingsTab() {
   };
 
   const uploadImg = async (key, file) => {
-    const b64 = await fileToBase64(file);
+    const raw = await fileToBase64(file);
+    const b64 = key === "logo_base64" ? await removeWhiteBackground(raw) : raw;
     setForm((p) => ({ ...p, [key]: b64 }));
   };
 
@@ -115,7 +117,7 @@ export default function SettingsTab() {
           <div>
             <label className="text-xs mono uppercase tracking-wider">Logo</label>
             <div className="flex items-center gap-3 mt-2">
-              {form.logo_base64 && <img src={form.logo_base64} alt="" className="w-16 h-16 rounded-lg object-contain bg-white p-1 border" />}
+              {form.logo_base64 && <img src={form.logo_base64} alt="" className="w-16 h-16 rounded-lg object-contain bg-black p-1 border" />}
               <label className="inline-flex items-center gap-2 px-3 h-10 rounded-md border cursor-pointer text-sm hover:bg-accent">
                 <UploadIcon size={14} /> Upload
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files[0] && uploadImg("logo_base64", e.target.files[0])} />
@@ -128,7 +130,7 @@ export default function SettingsTab() {
             <p className="text-[11px] text-muted-foreground mt-1">Gambar ini tampil di banner dashboard utama.</p>
             <div className="mt-2 space-y-2">
               {form.hero_image_base64 && (
-                <img src={form.hero_image_base64} alt="Preview gambar dashboard" className="w-full h-28 rounded-lg object-cover border" />
+                <img src={form.hero_image_base64} alt="Preview gambar dashboard" className="w-full h-28 rounded-lg object-contain bg-black border" />
               )}
               <div className="flex items-center gap-2">
                 <label className="inline-flex items-center gap-2 px-3 h-10 rounded-md border cursor-pointer text-sm hover:bg-accent">

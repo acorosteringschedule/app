@@ -114,7 +114,7 @@ export default function AppHeader({ activeTab, onTab }) {
       <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center gap-4">
         <div className="flex items-center gap-3">
           {settings.logo_base64 ? (
-            <img src={settings.logo_base64} alt="" className="w-9 h-9 rounded-lg object-contain bg-white p-0.5" />
+            <img src={settings.logo_base64} alt="" className="w-9 h-9 rounded-lg object-contain bg-black p-0.5" />
           ) : (
             <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ background: "var(--accent-hex)" }}>A</div>
           )}

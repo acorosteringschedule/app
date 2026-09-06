@@ -46,7 +46,7 @@ export default function Login() {
           <div className="max-w-lg fade-in">
             <div className="flex items-center gap-3 mb-8">
               {settings.logo_base64 ? (
-                <img src={settings.logo_base64} alt="Logo" className="w-14 h-14 object-contain rounded-xl bg-white p-1 shadow" />
+                <img src={settings.logo_base64} alt="Logo" className="w-14 h-14 object-contain rounded-xl bg-black p-1 shadow" />
               ) : (
                 <div className="w-14 h-14 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg" style={{ background: "var(--accent-hex)" }}>A</div>
               )}
