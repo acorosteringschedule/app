@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Clock, Sunrise, Sunset, Moon as MoonIcon, Coffee } from "lucide-react";
+import { getDayMark } from "@/lib/holidays";
 
 const MONTHS = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 const DOW = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
@@ -157,11 +158,16 @@ export default function MyCalendar() {
             const date = `${year}-${String(month).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
             const s = shifts[date];
             const isToday = date === today;
-            const dow = new Date(year, month - 1, d).getDay();
-            const isWeekend = dow === 0 || dow === 6;
+            const mark = getDayMark(date);
+            const isNonWork = mark.type !== null;
+            const bgClass = mark.type === "holiday" ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900" : "";
             return (
-              <div key={i} className={`aspect-square rounded-lg border p-1.5 flex flex-col hover:shadow-md transition-shadow ${isToday ? "ring-2" : ""}`} style={isToday ? { borderColor: "var(--accent-hex)" } : {}}>
-                <div className={`text-xs mono font-bold ${isWeekend ? "text-red-500" : ""}`}>{d}</div>
+              <div key={i} className={`aspect-square rounded-lg border p-1.5 flex flex-col hover:shadow-md transition-shadow ${bgClass} ${isToday ? "ring-2" : ""}`} style={isToday ? { borderColor: "var(--accent-hex)" } : {}} title={mark.label || ""}>
+                <div className="flex items-center justify-between">
+                  <div className={`text-xs mono font-bold ${isNonWork ? "text-red-600 dark:text-red-400" : ""}`}>{d}</div>
+                  {mark.type === "holiday" && <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500" />}
+                </div>
+                {mark.type === "holiday" && <div className="text-[9px] text-red-600 dark:text-red-400 mono leading-tight line-clamp-2">{mark.label}</div>}
                 {s && <div className={`shift-${s} mt-auto rounded px-1 py-0.5 text-[10px] font-semibold text-center`}>{LABEL[s]}</div>}
               </div>
             );

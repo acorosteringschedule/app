@@ -14,6 +14,8 @@ import {
   arrayMove, SortableContext, useSortable, verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { getDayMark } from "@/lib/holidays";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const SHIFT_OPTIONS = [
   { value: "", label: "-" },
@@ -304,16 +306,30 @@ export default function ShiftScheduleTab() {
                 {isAdmin && <th className="w-8 sticky-col" />}
                 <th className="px-3 py-2 text-left sticky-col font-semibold" style={{ left: isAdmin ? 32 : 0 }}>Nama Personil</th>
                 {Array.from({ length: nDays }, (_, i) => i + 1).map((d) => {
-                  const dow = new Date(year, month - 1, d).getDay();
-                  const isWeekend = dow === 0 || dow === 6;
+                  const date = `${year}-${String(month).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+                  const mark = getDayMark(date);
+                  const isWeekendOrHoliday = mark.type !== null;
+                  const bg = mark.type === "holiday" ? "bg-red-50 dark:bg-red-950/40" : (mark.type === "sunday" ? "bg-red-50/60 dark:bg-red-950/25" : "");
                   return (
                     <th
                       key={d}
                       onClick={() => bulkMode && selectColumn(d)}
-                      className={`w-10 px-1 py-2 text-center font-mono text-[10px] ${isWeekend ? "text-red-500" : ""} ${bulkMode ? "cursor-pointer hover:bg-accent" : ""}`}
-                      title={bulkMode ? "Klik untuk pilih seluruh kolom" : ""}
+                      className={`w-10 px-1 py-2 text-center font-mono text-[10px] ${isWeekendOrHoliday ? "text-red-600 dark:text-red-400 font-bold" : ""} ${bg} ${bulkMode ? "cursor-pointer hover:bg-accent" : ""}`}
+                      title={bulkMode ? "Klik untuk pilih seluruh kolom" : (mark.label || "")}
                     >
-                      {d}
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span>{d}</span>
+                        {mark.type === "holiday" && (
+                          <TooltipProvider delayDuration={100}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs max-w-[200px]">{mark.label}</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
                     </th>
                   );
                 })}
