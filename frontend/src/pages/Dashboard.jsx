@@ -11,7 +11,7 @@ import MyCalendar from "@/components/MyCalendar";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [tab, setTab] = useState("jadwal");
+  const [tab, setTab] = useState(user.role === "admin" ? "jadwal" : "kalender-saya");
 
   return (
     <div className="min-h-screen bg-background">
