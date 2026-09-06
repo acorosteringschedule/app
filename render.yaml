@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: aco-shift-scheduler-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/
+    envVars:
+      - key: MONGO_URL
+        sync: false
+      - key: DB_NAME
+        value: aco_shift_scheduler
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_NIK
+        value: ADMIN001
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_NAME
+        value: Administrator
+      - key: EMAIL_FROM_NAME
+        value: ACO Shift Scheduler
+      - key: EMAIL_REPLY_TO
+        sync: false
+      - key: EMERGENT_EMAIL_KEY
+        sync: false
