@@ -1,0 +1,160 @@
+{
+  "project_name": "ACO Shift Scheduler",
+  "domain": "aco-shiftscheduler.com",
+  "app_type": "hybrid_fullstack",
+  "design_archetype": "Futuristic Tactical Ops & High-Precision Command Center (Moon-Blue Electric)",
+  "emotional_tone": "Authoritative, Electric, High-Tech Precision, Professional, Smooth",
+  "typography": {
+    "font_family_display": "Outfit, Satoshi, sans-serif",
+    "font_family_body": "Plus Jakarta Sans, DM Sans, sans-serif",
+    "font_family_mono": "JetBrains Mono, Fira Code, monospace",
+    "weights": {
+      "light": 300,
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700,
+      "black": 900
+    },
+    "hierarchy": {
+      "h1_hero": "text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-none",
+      "h2_section": "text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight",
+      "h3_subsection": "text-xl sm:text-2xl font-medium tracking-normal",
+      "card_title": "text-lg sm:text-xl font-semibold",
+      "body": "text-sm sm:text-base leading-relaxed",
+      "caption_label": "text-xs font-mono uppercase tracking-[0.2em]"
+    }
+  },
+  "color_system": {
+    "primary_electric_moonblue": "#008BFF",
+    "primary_moonblue_hover": "#0073D1",
+    "primary_moonblue_light_bg": "rgba(0, 139, 255, 0.12)",
+    "primary_moonblue_glow": "0 0 25px rgba(0, 139, 255, 0.35)",
+    "css_variables_setup": {
+      "--primary-accent": "#008BFF",
+      "--primary-accent-hover": "#0073D1",
+      "--primary-accent-alpha10": "rgba(0, 139, 255, 0.10)",
+      "--primary-accent-alpha25": "rgba(0, 139, 255, 0.25)",
+      "--primary-accent-glow": "0 0 20px rgba(0, 139, 255, 0.3)"
+    },
+    "dark_mode_palette": {
+      "bg_canvas": "#0B0D14",
+      "bg_card": "#111522",
+      "bg_card_elevated": "#181E30",
+      "border_subtle": "rgba(255, 255, 255, 0.08)",
+      "border_accent": "rgba(0, 139, 255, 0.3)",
+      "text_main": "#F1F5F9",
+      "text_muted": "#94A3B8",
+      "text_faint": "#64748B"
+    },
+    "light_mode_palette": {
+      "bg_canvas": "#F8FAFC",
+      "bg_card": "#FFFFFF",
+      "bg_card_elevated": "#F1F5F9",
+      "border_subtle": "#E2E8F0",
+      "border_accent": "rgba(0, 139, 255, 0.4)",
+      "text_main": "#0F172A",
+      "text_muted": "#475569",
+      "text_faint": "#94A3B8"
+    },
+    "shift_status_colors": {
+      "pagi": { "bg": "#E0F2FE", "text": "#0369A1", "dark_bg": "rgba(14, 165, 233, 0.2)", "dark_text": "#38BDF8", "border": "#7DD3FC", "label": "PAGI (07:00-15:00)" },
+      "siang": { "bg": "#FEF3C7", "text": "#B45309", "dark_bg": "rgba(245, 158, 11, 0.2)", "dark_text": "#FBBF24", "border": "#FDE68A", "label": "SIANG (15:00-23:00)" },
+      "malam": { "bg": "#EDE9FE", "text": "#6D28D9", "dark_bg": "rgba(139, 92, 246, 0.2)", "dark_text": "#C4B5FD", "border": "#DDD6FE", "label": "MALAM (23:00-07:00)" },
+      "off": { "bg": "#F1F5F9", "text": "#64748B", "dark_bg": "rgba(255, 255, 255, 0.05)", "dark_text": "#64748B", "border": "transparent", "label": "LIBUR / OFF" },
+      "cuti": { "bg": "#FEE2E2", "text": "#B91C1C", "dark_bg": "rgba(239, 68, 68, 0.2)", "dark_text": "#F87171", "border": "#FCA5A5", "label": "CUTI" },
+      "sakit": { "bg": "#FFEDD5", "text": "#C2410C", "dark_bg": "rgba(249, 115, 22, 0.2)", "dark_text": "#FB923C", "border": "#FFD8A8", "label": "SAKIT" },
+      "dinas_luar": { "bg": "#DCFCE7", "text": "#15803D", "dark_bg": "rgba(34, 197, 94, 0.2)", "dark_text": "#4ADE80", "border": "#86EFAC", "label": "DINAS LUAR" },
+      "diklat": { "bg": "#E0E7FF", "text": "#4338CA", "dark_bg": "rgba(99, 102, 241, 0.2)", "dark_text": "#818CF8", "border": "#A5B4FC", "label": "DIKLAT" },
+      "penugasan": { "bg": "#F5D0FE", "text": "#A21CAF", "dark_bg": "rgba(217, 70, 239, 0.2)", "dark_text": "#E879F9", "border": "#F0ABFC", "label": "PENUGASAN" }
+    }
+  },
+  "login_page_design": {
+    "bg_style": "Clean White base background with subtle glowing electric moon-blue grid overlay and radial ambient glow",
+    "card_style": "High-contrast card with crisp 1px moon-blue subtle border, sharp or 12px smooth corners, crisp shadow",
+    "branding": "Customizable logo (Base64/URL uploadable by Admin), bold Title and Subtitle",
+    "inputs": "NIK (Monospace font preferred for numbers) + Password field with toggle visibility, login button with electric glow hover state",
+    "role_quick_demo_tabs": "Admin Login / Personil Login helper shortcuts for evaluator testing"
+  },
+  "dashboard_design": {
+    "header": { "sticky": true, "glassmorphism": "backdrop-blur-xl bg-slate-900/80 dark:bg-black/70 border-b border-white/10", "elements": ["Logo + Title", "Search / Quick Jump", "Notification Bell with Unread Badge counter", "Dark/Light Auto Toggle", "User Profile Avatar + Role Badge", "Site Content & Custom Theme Editor Button (Admin only)"] },
+    "sidebar_or_tabs": "Navigation bar with tabs: [Jadwal Shift, Personil (16), Pengajuan Cuti/Izin, Ringkasan Bulanan, Riwayat Perubahan, Pengaturan Situs]",
+    "stat_cards": "Bento-style summary cards with 1px active glow border, big bold metrics, percentage indicators, and live operational stats (Pagi Active, Siang Active, Malam Active, Leave Conflicts Alert)"
+  },
+  "shift_schedule_table_grid": {
+    "layout_mode": "High Density Grid with Horizontal Scroll and Sticky Personnel Column",
+    "features": [
+      "Row Drag & Drop Reordering (Not auto-alphabetical, custom 16 personnel operational priority order)",
+      "Cell Click / Select Dropdown menu for manual shift assignment (Pagi, Siang, Malam, Libur, Cuti, Sakit, DL, Diklat, Penugasan)",
+      "Auto-Generate Shift Pattern Modal (3/2 pattern: 3 kerja 2 libur, 3/3 pattern, 2/2 pattern) with date range selection",
+      "Excel Import (.xlsx / .csv) & Export (XLSX + PDF Landscape formatted table)",
+      "Leave Conflict Auto-Validation Indicator (Real-time check: Minimum 2 Pagi + 2 Siang + 1 Malam active per day; highlights deficient days in subtle amber/red warning)"
+    ]
+  },
+  "components_strategy": {
+    "buttons": "Pill or 8px rounded corners with primary accent glow on hover (`hover:shadow-[0_0_20px_rgba(0,139,255,0.4)] transition-all duration-200`)",
+    "dialogs_modals": "Shadcn Dialog with crisp dark backdrop blur, border-accent highlight header, accessible close button",
+    "table": "Shadcn Table heavily styled with sticky first column (personnel name + NIK + avatar) and compact matrix cells for 28-31 days",
+    "toast_notifications": "Sonner toasts with custom dark moonblue theme for success (submission approved), info (new shift updated), and warning (leave conflict alert)",
+    "color_picker": "Admin primary color accent live slider/picker that updates CSS variables instantly across the app"
+  },
+  "image_urls": {
+    "personnel_avatars": [
+      { "name": "Dewi Sartika (Hijab Blazer)", "url": "https://images.unsplash.com/photo-1690166444476-8cc4c0f24032?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODR8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjBpbmRvbmVzaWFuJTIwcGVyc29ubmVsJTIwYXZhdGFyJTIwcG9ydHJhaXQlMjBidXNpbmVzc3xlbnwwfHx8fDE3ODg2Njg4Nzh8MA&ixlib=rb-4.1.0&q=85" },
+      { "name": "Siti Rahma (Purple Scarf)", "url": "https://images.unsplash.com/photo-1649768524366-a93840e4c501?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODR8MHwxfHNlYXJjaHw0fHxwcm9mZXNzaW9uYWwlMjBpbmRvbmVzaWFuJTIwcGVyc29ubmVsJTIwYXZhdGFyJTIwcG9ydHJhaXQlMjBidXNpbmVzc3xlbnwwfHx8fDE3ODg2Njg4Nzh8MA&ixlib=rb-4.1.0&q=85" },
+      { "name": "Anisa Putri (Black Blazer)", "url": "https://images.unsplash.com/photo-1581065178047-8ee15951ede6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODR8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBpbmRvbmVzaWFuJTIwcGVyc29ubmVsJTIwYXZhdGFyJTIwcG9ydHJhaXQlMjBidXNpbmVzc3xlbnwwfHx8fDE3ODg2Njg4Nzh8MA&ixlib=rb-4.1.0&q=85" },
+      { "name": "Rina Wijaya (Arm Crossed)", "url": "https://images.unsplash.com/photo-1649399046939-7b8112221151?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODR8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjBpbmRvbmVzaWFuJTIwcGVyc29ubmVsJTIwYXZhdGFyJTIwcG9ydHJhaXQlMjBidXNpbmVzc3xlbnwwfHx8fDE3ODg2Njg4Nzh8MA&ixlib=rb-4.1.0&q=85" }
+    ]
+  },
+  "test_ids": {
+    "login": {
+      "nik_input": "login-nik-input",
+      "password_input": "login-password-input",
+      "submit_button": "login-submit-button",
+      "register_link": "login-register-link"
+    },
+    "register": {
+      "nik_input": "register-nik-input",
+      "name_input": "register-name-input",
+      "password_input": "register-password-input",
+      "submit_button": "register-submit-button"
+    },
+    "dashboard": {
+      "notification_bell": "notification-bell-button",
+      "notification_dropdown": "notification-dropdown-menu",
+      "theme_toggle": "theme-toggle-button",
+      "admin_color_picker": "admin-color-picker-input",
+      "shift_grid": "shift-schedule-grid-table",
+      "auto_generate_button": "auto-generate-shift-button",
+      "excel_import_input": "excel-import-file-input",
+      "excel_export_button": "excel-export-button",
+      "pdf_export_button": "pdf-export-button",
+      "leave_request_button": "submit-leave-request-button",
+      "approve_leave_button": "approve-leave-request-button",
+      "reject_leave_button": "reject-leave-request-button"
+    }
+  },
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "You tend to converge toward generic, on-distribution outputs. In frontend design, this creates what users call the AI slop aesthetic. Avoid this: make creative, distinctive frontends that surprise and delight.",
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients.",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur).",
+    "You MUST NOT apply universal transition (e.g. transition: all). This breaks transforms. Always add transitions for specific interactive elements like button, input excluding transforms.",
+    "You MUST NOT center align the app container, i.e., do not add .App { text-align: center; } in the css file. This disrupts human natural reading flow of text.",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style.",
+    "NEVER use AI assistant Emoji characters like 🤖🧠💭💡🔮🎯 etc for icons. Use Phosphor or Lucide icons.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+    "Main agent relies on these image URLs. Missing categories = main agent will use placeholder text which is FORBIDDEN.",
+    "Prioritize using pre-existing components from src/components/ui when applicable.",
+    "Use sonner for toasts located in /app/frontend/src/components/ui/sonner.jsx."
+  ],
+  "instructions_to_main_agent": [
+    "Ensure the application strictly fulfills all key functionalities: Login (NIK+password), Register with Admin approval status, Admin CRUD personnel (16 personnel default seed), Drag reorder for personnel rows in shift schedule table, Manual shift editor + Auto-generate patterns (3/2, 3/3, 2/2), Excel import/export + PDF Landscape export, Leave conflict validation rule (Min 2 Pagi + 2 Siang + 1 Malam per day), Notification bell system for both Admin & Personil, Monthly summary report, Change log, and Site Content Editor + Primary Color Accent Picker.",
+    "Implement dynamic CSS variables for the Admin custom primary color picker so changing the accent color updates all buttons, focus rings, status highlights, and charts seamlessly.",
+    "Ensure dark mode elegant moon-blue theme is auto-detected from system preferences and manual toggle works seamlessly.",
+    "All interactive elements must include data-testid attributes matching the test_ids schema provided in this file."
+  ]
+}
