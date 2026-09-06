@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useSettings } from "@/contexts/SettingsContext";
+import { api, formatApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Save, Upload as UploadIcon, Palette } from "lucide-react";
+import { Save, Upload as UploadIcon, Palette, CalendarPlus, Trash2, CalendarDays } from "lucide-react";
+import { ID_HOLIDAYS } from "@/lib/holidays";
 
 async function fileToBase64(file) {
   return new Promise((res, rej) => {
@@ -17,8 +19,9 @@ async function fileToBase64(file) {
 }
 
 export default function SettingsTab() {
-  const { settings, update, applyPrimary } = useSettings();
+  const { settings, update, applyPrimary, holidays, refreshHolidays } = useSettings();
   const [form, setForm] = useState(settings);
+  const [newHol, setNewHol] = useState({ date: "", name: "" });
 
   useEffect(() => { setForm(settings); }, [settings]);
 
@@ -31,6 +34,32 @@ export default function SettingsTab() {
     const b64 = await fileToBase64(file);
     setForm((p) => ({ ...p, [key]: b64 }));
   };
+
+  const addHoliday = async () => {
+    if (!newHol.date || !newHol.name.trim()) { toast.error("Isi tanggal dan nama libur"); return; }
+    try {
+      await api.post("/holidays", newHol);
+      toast.success(`Hari libur "${newHol.name}" ditambahkan`);
+      setNewHol({ date: "", name: "" });
+      refreshHolidays();
+    } catch (e) { toast.error(formatApiError(e)); }
+  };
+
+  const removeHoliday = async (id, name) => {
+    if (!confirm(`Hapus hari libur "${name}"?`)) return;
+    try {
+      await api.delete(`/holidays/${id}`);
+      toast.success("Hari libur dihapus");
+      refreshHolidays();
+    } catch (e) { toast.error(formatApiError(e)); }
+  };
+
+  // Preview built-in national holidays (grouped by year, filter to selected year)
+  const currentYear = new Date().getFullYear();
+  const [previewYear, setPreviewYear] = useState(currentYear);
+  const nationalList = Object.entries(ID_HOLIDAYS)
+    .filter(([d]) => d.startsWith(String(previewYear)))
+    .sort();
 
   return (
     <div className="space-y-6 fade-in">
@@ -110,6 +139,79 @@ export default function SettingsTab() {
       <Button onClick={save} className="gap-2 glow-btn text-white" style={{ background: "var(--accent-hex)" }} data-testid="save-settings-button">
         <Save size={16} /> Simpan Perubahan
       </Button>
+
+      {/* Custom Holiday Editor */}
+      <Card className="p-5 space-y-4" data-testid="holiday-editor-card">
+        <div className="flex items-center gap-2">
+          <CalendarDays size={18} style={{ color: "var(--accent-hex)" }} />
+          <div>
+            <h4 className="font-display font-semibold">Editor Hari Libur Khusus</h4>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Tambahkan cuti bersama, ulang tahun perusahaan, atau libur lain — akan otomatis muncul sebagai penanda merah di tabel jadwal.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-[180px_1fr_auto] gap-3 items-end">
+          <div>
+            <label className="text-xs mono uppercase tracking-wider">Tanggal</label>
+            <Input type="date" value={newHol.date} onChange={(e) => setNewHol({ ...newHol, date: e.target.value })} data-testid="holiday-date-input" />
+          </div>
+          <div>
+            <label className="text-xs mono uppercase tracking-wider">Nama Libur</label>
+            <Input placeholder="Cuti Bersama Idul Fitri" value={newHol.name} onChange={(e) => setNewHol({ ...newHol, name: e.target.value })} data-testid="holiday-name-input" />
+          </div>
+          <Button onClick={addHoliday} className="gap-2 glow-btn text-white h-10" style={{ background: "var(--accent-hex)" }} data-testid="add-holiday-button">
+            <CalendarPlus size={16} /> Tambah
+          </Button>
+        </div>
+
+        {holidays.length > 0 && (
+          <div>
+            <div className="text-[10px] mono uppercase tracking-widest text-muted-foreground mb-2">Libur Kustom ({holidays.length})</div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {holidays.map((h) => (
+                <div key={h.id} className="flex items-center gap-2 p-3 rounded-lg border-2 bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-900" data-testid={`holiday-item-${h.id}`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[10px] mono uppercase tracking-widest text-red-600 dark:text-red-400">
+                      {new Date(h.date + "T00:00:00").toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
+                    </div>
+                    <div className="font-semibold text-sm truncate">{h.name}</div>
+                  </div>
+                  <Button size="icon" variant="ghost" onClick={() => removeHoliday(h.id, h.name)} className="flex-shrink-0" data-testid={`delete-holiday-${h.id}`}>
+                    <Trash2 size={14} className="text-destructive" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="pt-4 border-t">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-[10px] mono uppercase tracking-widest text-muted-foreground">Libur Nasional Bawaan ({nationalList.length})</div>
+            <select
+              className="text-xs mono px-2 py-1 rounded border bg-background"
+              value={previewYear}
+              onChange={(e) => setPreviewYear(Number(e.target.value))}
+              data-testid="holiday-year-select"
+            >
+              {[currentYear - 1, currentYear, currentYear + 1].map((y) => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-1.5 text-xs">
+            {nationalList.map(([date, name]) => (
+              <div key={date} className="flex items-center gap-2 p-2 rounded bg-muted/50">
+                <span className="mono text-[10px] text-muted-foreground min-w-[68px]">{new Date(date + "T00:00:00").toLocaleDateString("id-ID", { day: "2-digit", month: "short" })}</span>
+                <span className="truncate">{name}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-2 italic">
+            Libur nasional bawaan berdasarkan kalender Indonesia. Untuk override tanggal tertentu, tambahkan di daftar libur kustom di atas.
+          </p>
+        </div>
+      </Card>
     </div>
   );
 }

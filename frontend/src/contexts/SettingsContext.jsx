@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
+import { setCustomHolidays } from "@/lib/holidays";
 
 const SettingsCtx = createContext(null);
 
@@ -27,6 +28,7 @@ function hexToHslTriplet(hex) {
 
 export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState({});
+  const [holidays, setHolidaysState] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchSettings = useCallback(async () => {
@@ -39,8 +41,17 @@ export function SettingsProvider({ children }) {
     }
   }, []);
 
+  const fetchHolidays = useCallback(async () => {
+    try {
+      const { data } = await api.get("/holidays");
+      setHolidaysState(data || []);
+      setCustomHolidays(data || []);
+    } catch { /* not authenticated yet */ }
+  }, []);
+
   useEffect(() => {
     fetchSettings();
+    fetchHolidays();
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const isDark = localStorage.getItem("aco_theme") === "dark" ||
       (!localStorage.getItem("aco_theme") && mq.matches);
@@ -61,7 +72,7 @@ export function SettingsProvider({ children }) {
   };
 
   return (
-    <SettingsCtx.Provider value={{ settings, loading, refresh: fetchSettings, update, applyPrimary }}>
+    <SettingsCtx.Provider value={{ settings, loading, refresh: fetchSettings, update, applyPrimary, holidays, refreshHolidays: fetchHolidays }}>
       {children}
     </SettingsCtx.Provider>
   );

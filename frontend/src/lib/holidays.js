@@ -1,7 +1,5 @@
-// Indonesian national holidays (approximate — admin can override in settings later)
-// Format: "YYYY-MM-DD": "Nama Libur"
+// Indonesian national holidays (built-in). Admin can add custom ones via Settings.
 export const ID_HOLIDAYS = {
-  // 2025
   "2025-01-01": "Tahun Baru Masehi",
   "2025-01-27": "Isra Mikraj Nabi Muhammad",
   "2025-01-29": "Tahun Baru Imlek 2576",
@@ -20,13 +18,10 @@ export const ID_HOLIDAYS = {
   "2025-09-05": "Maulid Nabi Muhammad",
   "2025-12-25": "Hari Raya Natal",
 
-  // 2026
   "2026-01-01": "Tahun Baru Masehi",
   "2026-01-17": "Isra Mikraj Nabi Muhammad",
   "2026-02-17": "Tahun Baru Imlek 2577",
   "2026-03-19": "Hari Suci Nyepi 1948",
-  "2026-03-20": "Cuti Bersama Nyepi",
-  "2026-03-20": "Cuti Bersama Nyepi",
   "2026-03-21": "Hari Raya Idul Fitri 1447 H",
   "2026-03-22": "Hari Raya Idul Fitri 1447 H",
   "2026-04-03": "Wafat Isa Almasih",
@@ -41,7 +36,6 @@ export const ID_HOLIDAYS = {
   "2026-08-25": "Maulid Nabi Muhammad",
   "2026-12-25": "Hari Raya Natal",
 
-  // 2027
   "2027-01-01": "Tahun Baru Masehi",
   "2027-01-07": "Isra Mikraj Nabi Muhammad",
   "2027-02-06": "Tahun Baru Imlek 2578",
@@ -60,18 +54,34 @@ export const ID_HOLIDAYS = {
   "2027-12-25": "Hari Raya Natal",
 };
 
-/** Returns { type: 'weekend' | 'holiday' | 'sunday' | null, label?: string } */
+// Runtime-injected custom holidays from admin settings (list of {date, name})
+let CUSTOM_HOLIDAYS = {};
+
+export function setCustomHolidays(list) {
+  const map = {};
+  for (const h of list || []) {
+    if (h?.date && h?.name) map[h.date] = h.name;
+  }
+  CUSTOM_HOLIDAYS = map;
+}
+
+export function getHolidayName(dateStr) {
+  return CUSTOM_HOLIDAYS[dateStr] || ID_HOLIDAYS[dateStr] || null;
+}
+
+/** Returns { type: 'weekend' | 'holiday' | 'sunday' | null, label?: string, custom?: boolean } */
 export function getDayMark(dateStr) {
   const d = new Date(dateStr);
   const dow = d.getDay();
-  const holiday = ID_HOLIDAYS[dateStr];
-  if (holiday) return { type: "holiday", label: holiday };
+  const customName = CUSTOM_HOLIDAYS[dateStr];
+  if (customName) return { type: "holiday", label: customName, custom: true };
+  const nationalName = ID_HOLIDAYS[dateStr];
+  if (nationalName) return { type: "holiday", label: nationalName, custom: false };
   if (dow === 0) return { type: "sunday", label: "Minggu" };
   if (dow === 6) return { type: "weekend", label: "Sabtu" };
   return { type: null };
 }
 
 export function isNonWorkingDay(dateStr) {
-  const m = getDayMark(dateStr);
-  return m.type !== null;
+  return getDayMark(dateStr).type !== null;
 }

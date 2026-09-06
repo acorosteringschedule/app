@@ -292,6 +292,11 @@ class SiteSettingsBody(BaseModel):
     hero_image_base64: Optional[str] = None
 
 
+class HolidayBody(BaseModel):
+    date: str  # YYYY-MM-DD
+    name: str
+
+
 # ---------- Startup ----------
 @app.on_event("startup")
 async def startup():
@@ -300,6 +305,7 @@ async def startup():
     await db.shifts.create_index([("user_id", 1), ("date", 1)], unique=True)
     await db.requests.create_index("user_id")
     await db.change_logs.create_index("timestamp")
+    await db.custom_holidays.create_index("date")
 
     # Seed admin
     admin_email = os.environ.get("ADMIN_EMAIL")
@@ -1028,6 +1034,47 @@ async def export_xlsx(year: int, month: int, admin: dict = Depends(require_admin
     wb.save(buffer)
     buffer.seek(0)
     return StreamingResponse(buffer, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition": f'attachment; filename="jadwal_{year}_{month:02d}.xlsx"'})
+
+
+# ---------- Custom Holidays ----------
+@api.get("/holidays")
+async def list_holidays(user: dict = Depends(get_current_user)):
+    items = await db.custom_holidays.find({}, {"_id": 0}).sort("date", 1).to_list(500)
+    return items
+
+
+@api.post("/holidays")
+async def create_holiday(body: HolidayBody, admin: dict = Depends(require_admin)):
+    try:
+        datetime.strptime(body.date, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(400, "Format tanggal harus YYYY-MM-DD")
+    if not body.name.strip():
+        raise HTTPException(400, "Nama libur wajib diisi")
+    exists = await db.custom_holidays.find_one({"date": body.date})
+    if exists:
+        raise HTTPException(400, "Sudah ada libur untuk tanggal ini")
+    doc = {
+        "id": new_id(),
+        "date": body.date,
+        "name": body.name.strip(),
+        "created_by": admin["name"],
+        "created_at": now_utc().isoformat(),
+    }
+    await db.custom_holidays.insert_one(doc)
+    await log_change(admin, f"Menambah hari libur: {body.date} — {body.name}")
+    doc.pop("_id", None)
+    return doc
+
+
+@api.delete("/holidays/{holiday_id}")
+async def delete_holiday(holiday_id: str, admin: dict = Depends(require_admin)):
+    target = await db.custom_holidays.find_one({"id": holiday_id})
+    if not target:
+        raise HTTPException(404, "Hari libur tidak ditemukan")
+    await db.custom_holidays.delete_one({"id": holiday_id})
+    await log_change(admin, f"Menghapus hari libur: {target['date']} — {target['name']}")
+    return {"ok": True}
 
 
 # ---------- Dashboard Stats ----------
