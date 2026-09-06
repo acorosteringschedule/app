@@ -79,10 +79,10 @@ export default function DashboardHome() {
           <img
             src={settings.hero_image_base64}
             alt=""
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-contain bg-[#0B0D14]"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/30 to-transparent" />
         <div className="absolute inset-0 grid-overlay opacity-30" />
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full blur-3xl opacity-30" style={{ background: "var(--accent-hex)" }} />
         <div className="relative z-10 flex min-h-[220px] sm:min-h-[280px] lg:min-h-[320px] items-center p-6 sm:p-8 lg:p-10">
