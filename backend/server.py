@@ -283,6 +283,8 @@ class SiteSettingsBody(BaseModel):
     title: Optional[str] = None
     subtitle: Optional[str] = None
     main_text: Optional[str] = None
+    login_hero_title: Optional[str] = None
+    login_hero_subtitle: Optional[str] = None
     logo_base64: Optional[str] = None
     signature_base64: Optional[str] = None
     signature_name: Optional[str] = None
@@ -332,6 +334,8 @@ async def startup():
             "title": "ACO Shift Scheduler",
             "subtitle": "Sistem Penjadwalan Shift & Manajemen Personil",
             "main_text": "Kelola jadwal dinas, cuti, dan penugasan dengan presisi tinggi.",
+            "login_hero_title": "Aeronautical Communication Shift Rostering",
+            "login_hero_subtitle": "Sistem Penjadwalan Shift Terpadu",
             "logo_base64": None,
             "signature_base64": None,
             "signature_name": "",
@@ -339,6 +343,11 @@ async def startup():
             "primary_color": "#008BFF",
             "updated_at": now_utc().isoformat(),
         })
+    elif not settings.get("login_hero_title"):
+        await db.site_settings.update_one({"id": "singleton"}, {"$set": {
+            "login_hero_title": "Aeronautical Communication Shift Rostering",
+            "login_hero_subtitle": settings.get("login_hero_subtitle") or "Sistem Penjadwalan Shift Terpadu",
+        }})
 
 
 # ---------- Auth Endpoints ----------
@@ -926,6 +935,42 @@ async def export_xlsx(year: int, month: int, admin: dict = Depends(require_admin
     wb.save(buffer)
     buffer.seek(0)
     return StreamingResponse(buffer, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition": f'attachment; filename="jadwal_{year}_{month:02d}.xlsx"'})
+
+
+# ---------- Dashboard Stats ----------
+@api.get("/dashboard/stats")
+async def dashboard_stats(user: dict = Depends(get_current_user)):
+    today = now_utc().date().isoformat()
+    year = now_utc().year
+    month = now_utc().month
+    _, ndays = calendar.monthrange(year, month)
+    month_start = f"{year:04d}-{month:02d}-01"
+    month_end = f"{year:04d}-{month:02d}-{ndays:02d}"
+
+    total_personnel = await db.users.count_documents({"role": "personil"})
+    pending_requests = await db.requests.count_documents({"status": "pending"})
+    approved_month = await db.requests.count_documents({
+        "status": "approved",
+        "start_date": {"$gte": month_start, "$lte": month_end},
+    })
+
+    today_shifts = await db.shifts.find({"date": today}, {"_id": 0, "shift": 1, "user_id": 1}).to_list(500)
+    dist = {"pagi": 0, "siang": 0, "malam": 0, "off": 0, "cuti": 0, "sakit": 0, "dinas_luar": 0, "diklat": 0, "penugasan": 0}
+    for s in today_shifts:
+        if s["shift"] in dist:
+            dist[s["shift"]] += 1
+    # personnel without any assigned shift today count as "not scheduled"
+    scheduled_ids = {s["user_id"] for s in today_shifts}
+    not_scheduled = max(0, total_personnel - len(scheduled_ids))
+
+    return {
+        "total_personnel": total_personnel,
+        "pending_requests": pending_requests,
+        "approved_this_month": approved_month,
+        "today": today,
+        "today_distribution": dist,
+        "not_scheduled_today": not_scheduled,
+    }
 
 
 # ---------- Root ----------

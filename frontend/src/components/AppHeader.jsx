@@ -94,10 +94,11 @@ export default function AppHeader({ activeTab, onTab }) {
   };
 
   const tabs = user.role === "admin"
-    ? ["jadwal", "personil", "pengajuan", "ringkasan", "riwayat", "pengaturan"]
+    ? ["dashboard", "jadwal", "personil", "pengajuan", "ringkasan", "riwayat", "pengaturan"]
     : ["jadwal", "kalender-saya", "pengajuan-saya"];
 
   const tabLabels = {
+    dashboard: "Dashboard",
     jadwal: "Jadwal Shift",
     personil: "Personil",
     pengajuan: "Pengajuan",

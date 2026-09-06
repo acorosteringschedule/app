@@ -43,11 +43,19 @@ export default function SettingsTab() {
         <Card className="p-5 space-y-4">
           <h4 className="font-display font-semibold">Konten</h4>
           <div>
-            <label className="text-xs mono uppercase tracking-wider">Judul</label>
+            <label className="text-xs mono uppercase tracking-wider">Judul Halaman Login</label>
+            <Input value={form.login_hero_title || ""} onChange={(e) => setForm({ ...form, login_hero_title: e.target.value })} placeholder="Aeronautical Communication Shift Rostering" />
+          </div>
+          <div>
+            <label className="text-xs mono uppercase tracking-wider">Sub-judul Halaman Login</label>
+            <Input value={form.login_hero_subtitle || ""} onChange={(e) => setForm({ ...form, login_hero_subtitle: e.target.value })} placeholder="Sistem Penjadwalan Shift Terpadu" />
+          </div>
+          <div>
+            <label className="text-xs mono uppercase tracking-wider">Judul Header (Dashboard)</label>
             <Input value={form.title || ""} onChange={(e) => setForm({ ...form, title: e.target.value })} />
           </div>
           <div>
-            <label className="text-xs mono uppercase tracking-wider">Sub-judul</label>
+            <label className="text-xs mono uppercase tracking-wider">Sub-judul Header</label>
             <Input value={form.subtitle || ""} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} />
           </div>
           <div>

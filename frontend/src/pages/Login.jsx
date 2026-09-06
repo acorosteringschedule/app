@@ -55,13 +55,11 @@ export default function Login() {
                 <div className="font-display font-bold text-lg">{settings.title || "ACO Shift Scheduler"}</div>
               </div>
             </div>
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold leading-none tracking-tight">
-              Presisi<br />
-              <span style={{ color: "var(--accent-hex)" }}>Operasional</span><br />
-              Setiap Shift.
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.05] tracking-tight">
+              {settings.login_hero_title || "Aeronautical Communication Shift Rostering"}
             </h1>
             <p className="mt-6 text-muted-foreground text-base max-w-md leading-relaxed">
-              {settings.subtitle || "Sistem penjadwalan shift & manajemen personil"}
+              {settings.login_hero_subtitle || settings.subtitle || "Sistem Penjadwalan Shift Terpadu"}
             </p>
             <p className="mt-4 text-sm text-muted-foreground max-w-md">
               {settings.main_text}
