@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Bell, LogOut, Moon, Sun, Settings as SettingsIcon } from "lucide-react";
+import { Bell, BellRing, LogOut, Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AppHeader({ activeTab, onTab }) {
@@ -13,19 +13,71 @@ export default function AppHeader({ activeTab, onTab }) {
   const { settings } = useSettings();
   const [notes, setNotes] = useState([]);
   const [dark, setDark] = useState(document.documentElement.classList.contains("dark"));
+  const [permission, setPermission] = useState(typeof Notification !== "undefined" ? Notification.permission : "denied");
+  const seenIdsRef = useRef(new Set());
+  const initializedRef = useRef(false);
 
   const fetchNotes = async () => {
     try {
       const { data } = await api.get("/notifications");
+      // On first load, mark all as "seen" to avoid spamming past notifications
+      if (!initializedRef.current) {
+        data.forEach((n) => seenIdsRef.current.add(n.id));
+        initializedRef.current = true;
+      } else {
+        // Fire browser notifications for new unread items
+        const fresh = data.filter((n) => !seenIdsRef.current.has(n.id) && !n.read);
+        for (const n of fresh) {
+          seenIdsRef.current.add(n.id);
+          fireBrowserNotification(n);
+        }
+        data.forEach((n) => seenIdsRef.current.add(n.id));
+      }
       setNotes(data);
     } catch { /* ignore */ }
   };
 
+  const fireBrowserNotification = (n) => {
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    try {
+      const notif = new Notification(settings.title || "ACO Shift Scheduler", {
+        body: n.message,
+        icon: settings.logo_base64 || undefined,
+        tag: n.id,
+        badge: settings.logo_base64 || undefined,
+      });
+      notif.onclick = () => { window.focus(); notif.close(); };
+    } catch (e) { /* ignore */ }
+  };
+
   useEffect(() => {
     fetchNotes();
-    const iv = setInterval(fetchNotes, 20000);
+    const iv = setInterval(fetchNotes, 15000);
     return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const requestPushPermission = async () => {
+    if (typeof Notification === "undefined") {
+      toast.error("Browser Anda tidak mendukung notifikasi push");
+      return;
+    }
+    try {
+      const p = await Notification.requestPermission();
+      setPermission(p);
+      if (p === "granted") {
+        toast.success("Notifikasi browser diaktifkan");
+        new Notification(settings.title || "ACO Shift Scheduler", {
+          body: "Notifikasi push berhasil diaktifkan. Anda akan menerima pemberitahuan realtime.",
+          icon: settings.logo_base64 || undefined,
+        });
+      } else {
+        toast.info("Notifikasi tidak diaktifkan");
+      }
+    } catch (e) {
+      toast.error("Gagal mengaktifkan notifikasi");
+    }
+  };
 
   const unread = notes.filter((n) => !n.read).length;
 
@@ -86,6 +138,12 @@ export default function AppHeader({ activeTab, onTab }) {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          {permission !== "granted" && (
+            <Button variant="outline" size="sm" onClick={requestPushPermission} className="gap-1.5" data-testid="enable-push-button">
+              <BellRing size={14} /> <span className="hidden sm:inline text-xs">Aktifkan Push</span>
+            </Button>
+          )}
+
           <Popover onOpenChange={(o) => o && unread && markRead()}>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" data-testid="notification-bell-button" className="relative">
@@ -131,7 +189,6 @@ export default function AppHeader({ activeTab, onTab }) {
         </div>
       </div>
 
-      {/* Mobile tabs */}
       <div className="md:hidden overflow-x-auto border-t px-4 py-2 flex gap-1">
         {tabs.map((t) => (
           <button key={t} onClick={() => onTab(t)} className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium ${activeTab === t ? "text-white" : "bg-muted text-muted-foreground"}`} style={activeTab === t ? { background: "var(--accent-hex)" } : {}}>

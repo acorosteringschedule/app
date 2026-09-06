@@ -29,6 +29,8 @@ Aplikasi penjadwalan shift & manajemen pengajuan untuk **16 personil**, dengan m
 - [x] Kalender pribadi personil
 - [x] Site settings (title, subtitle, main_text, logo base64, tanda tangan, primary_color picker live)
 - [x] Dark mode auto (system pref + manual toggle) dengan palet moon-blue
+- [x] **Push notifikasi browser** (native Notification API, poll 15s, tombol "Aktifkan Push")
+- [x] **Email notifikasi via Resend/Emergent proxy** — approve/reject pengajuan otomatis kirim email ke personil
 
 ## Backlog / P1
 - [ ] Email notifications via Resend (di-skip user; bisa diaktifkan nanti)

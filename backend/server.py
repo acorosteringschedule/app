@@ -6,11 +6,17 @@ load_dotenv(ROOT_DIR / '.env')
 
 import os
 import io
+import re
 import uuid
+import asyncio
+import ipaddress
 import logging
 import calendar
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Dict, Any
+from html import escape
+from html.parser import HTMLParser
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, UploadFile, File
 from fastapi.responses import StreamingResponse
@@ -20,6 +26,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr
 import bcrypt
 import jwt
+import httpx
 import openpyxl
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
@@ -41,6 +48,135 @@ security = HTTPBearer(auto_error=False)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("aco")
+
+# ---------- Email (Emergent Resend proxy) ----------
+EMAIL_BASE_URL = "https://integrations.emergentagent.com"
+EMAIL_KEY = os.environ.get("EMERGENT_EMAIL_KEY")
+EMAIL_FROM_NAME = os.environ.get("EMAIL_FROM_NAME", "ACO Shift Scheduler")
+EMAIL_REPLY_TO = os.environ.get("EMAIL_REPLY_TO")
+
+_SHORTENERS = ("bit.ly", "tinyurl.com", "t.co", "is.gd", "cutt.ly", "goo.gl", "rebrand.ly")
+_CRED_ASK = (
+    "reply with your password", "reply with the code", "send your password", "cvv",
+    "send us your password", "enter your password below", "confirm your card number",
+    "your full card number", "seed phrase", "recovery phrase", "verify your card",
+    "social security number", "confirm your bank details",
+)
+_HOSTISH = re.compile(r"\b(?:https?://)?((?:[a-z0-9-]+\.)+[a-z]{2,})", re.I)
+
+
+def _host_ok(host: str) -> bool:
+    if not host or "xn--" in host:
+        return False
+    try:
+        ipaddress.ip_address(host)
+        return False
+    except ValueError:
+        pass
+    return not any(host == s or host.endswith("." + s) for s in _SHORTENERS)
+
+
+def _same_site(shown: str, real: str) -> bool:
+    return shown == real or real.endswith("." + shown) or shown.endswith("." + real)
+
+
+class _EmailScan(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.tags, self.urls, self.anchors = set(), [], []
+        self._href, self._text = None, []
+
+    def handle_starttag(self, tag, attrs):
+        self.tags.add(tag.lower())
+        self.urls += [v for k, v in attrs if k.lower() in ("href", "src") and v]
+        if tag.lower() == "a":
+            self._href = dict((k.lower(), v) for k, v in attrs).get("href")
+            self._text = []
+
+    def handle_data(self, data):
+        if self._href is not None:
+            self._text.append(data)
+
+    def handle_endtag(self, tag):
+        if tag.lower() == "a" and self._href is not None:
+            self.anchors.append((self._href, "".join(self._text)))
+            self._href, self._text = None, []
+
+
+def _assert_safe_email(subject: str, html: str) -> None:
+    scan = _EmailScan()
+    scan.feed(html)
+    if scan.tags & {"form", "input", "textarea", "select"}:
+        raise ValueError("No forms or input fields in email (G2)")
+    body = f"{subject}\n{html}".lower()
+    for p in _CRED_ASK:
+        if p in body:
+            raise ValueError(f"Email asks the recipient for credentials: {p!r} (G2)")
+    for url in scan.urls:
+        low = url.strip().lower()
+        if low.startswith(("mailto:", "tel:", "cid:", "#")):
+            continue
+        if not low.startswith("https://"):
+            raise ValueError(f"Email links/assets must be absolute https: {url!r} (G3)")
+        host = urlparse(low).hostname or ""
+        if not _host_ok(host) or urlparse(low).username is not None:
+            raise ValueError(f"Shortened/numeric/creds URL: {url!r} (G3)")
+    for href, text in scan.anchors:
+        real = urlparse(href.strip().lower()).hostname or ""
+        if not real:
+            continue
+        for m in _HOSTISH.finditer(text):
+            if not _same_site(m.group(1).lower(), real):
+                raise ValueError(f"Anchor text {m.group(1)!r} ≠ real host {real!r} (G3)")
+
+
+async def _send_email_now(to: str, subject: str, html: str) -> Optional[str]:
+    if not EMAIL_KEY:
+        logger.info("EMERGENT_EMAIL_KEY not configured; skipping email")
+        return None
+    _assert_safe_email(subject, html)
+    payload = {"to": [to], "subject": subject, "html": html, "from_name": EMAIL_FROM_NAME}
+    if EMAIL_REPLY_TO:
+        payload["contact_email"] = EMAIL_REPLY_TO
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                f"{EMAIL_BASE_URL}/api/v1/email/send",
+                headers={"X-Email-Key": EMAIL_KEY},
+                json=payload,
+            )
+        resp.raise_for_status()
+        return resp.json().get("id")
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Email send HTTP error: {e.response.status_code} {e.response.text}")
+    except Exception as e:
+        logger.error(f"Email send error: {e}")
+    return None
+
+
+def send_email_bg(to: str, subject: str, html: str) -> None:
+    """Fire-and-forget: don't block API response if email fails."""
+    if not to or "@" not in to:
+        return
+    asyncio.create_task(_send_email_now(to, subject, html))
+
+
+def _email_template(title: str, body_html: str, status_color: str = "#008BFF") -> str:
+    safe_name = escape(EMAIL_FROM_NAME)
+    return (
+        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+        f'style="background:#f1f5f9;padding:24px 0;font-family:Arial,sans-serif">'
+        f'<tr><td align="center">'
+        f'<table role="presentation" width="560" cellpadding="0" cellspacing="0" '
+        f'style="background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0">'
+        f'<tr><td style="background:{status_color};padding:20px 28px;color:#ffffff;font-weight:700;font-size:16px">'
+        f'{escape(title)}</td></tr>'
+        f'<tr><td style="padding:28px;color:#0f172a;font-size:14px;line-height:1.6">{body_html}</td></tr>'
+        f'<tr><td style="padding:16px 28px;background:#f8fafc;color:#64748b;font-size:11px;border-top:1px solid #e2e8f0">'
+        f'Dikirim otomatis oleh {safe_name}. Kami tidak akan pernah meminta password atau data kartu Anda melalui email.'
+        f'</td></tr>'
+        f'</table></td></tr></table>'
+    )
 
 
 def now_utc() -> datetime:
@@ -581,7 +717,10 @@ async def approve_request(req_id: str, body: ApprovalBody, admin: dict = Depends
 
 
 async def notify_request_result(req: dict, status: str, note: str):
-    msg = f"Pengajuan {req['type'].replace('_', ' ').title()} Anda telah {'disetujui' if status == 'approved' else 'ditolak'}"
+    approved = status == "approved"
+    label = "disetujui" if approved else "ditolak"
+    type_label = req['type'].replace('_', ' ').title()
+    msg = f"Pengajuan {type_label} Anda telah {label}"
     if note:
         msg += f". Catatan: {note}"
     await db.notifications.insert_one({
@@ -593,6 +732,21 @@ async def notify_request_result(req: dict, status: str, note: str):
         "read": False,
         "created_at": now_utc().isoformat(),
     })
+    # Email personil
+    user = await db.users.find_one({"id": req["user_id"]}, {"_id": 0, "email": 1, "name": 1})
+    if user and user.get("email") and "@" in user["email"] and not user["email"].endswith("@aco.local"):
+        color = "#10B981" if approved else "#EF4444"
+        note_html = f'<p style="margin:12px 0 0;padding:12px;background:#fef3c7;border-left:3px solid #f59e0b;color:#78350f"><b>Catatan admin:</b> {escape(note)}</p>' if note else ""
+        body = (
+            f'<p>Halo <b>{escape(user["name"])}</b>,</p>'
+            f'<p>Pengajuan <b>{escape(type_label)}</b> Anda untuk periode '
+            f'<b>{escape(req["start_date"])}</b> s/d <b>{escape(req["end_date"])}</b> '
+            f'telah <b style="color:{color}">{escape(label.upper())}</b> oleh admin.</p>'
+            f'{note_html}'
+            f'<p style="margin-top:20px;color:#475569">Silakan masuk ke aplikasi untuk melihat detail lengkap.</p>'
+        )
+        subject = f"[{EMAIL_FROM_NAME}] Pengajuan {type_label} {label.title()}"
+        send_email_bg(user["email"], subject, _email_template(f"Pengajuan {label.title()}", body, color))
 
 
 # ---------- Notifications ----------
