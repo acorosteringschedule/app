@@ -24,6 +24,21 @@ Render and confirm the service plan is **Starter**. Render billing must be enabl
 the YAML change alone cannot upgrade an already-existing service until the
 Blueprint sync is approved.
 
+### Free-tier workaround
+
+If Starter is not an option, create a free HTTP monitor in UptimeRobot or
+cron-job.org with these settings:
+
+- URL: `https://aco-shift-scheduler-api.onrender.com/api/`
+- Method: `GET`
+- Interval: every 5 minutes
+- Expected response: HTTP `200`
+
+The `/api/` endpoint is the Render health check and does not require login. This
+can keep a Free service warm for several hours, but it is only a workaround:
+Render may still sleep the service, delay the first request, or change Free-tier
+limits. It also does not replace database backups or production monitoring.
+
 ## 3. Vercel frontend
 
 Import the repository into Vercel and set the project root to `frontend`. Vercel will use `frontend/vercel.json` and build with `yarn build`.
