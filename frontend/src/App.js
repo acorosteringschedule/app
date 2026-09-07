@@ -11,22 +11,10 @@ import Dashboard from "@/pages/Dashboard";
 import "@/App.css";
 
 function App() {
-  const { loading, error } = useSettings();
+  const { loading } = useSettings();
 
   if (loading && !localStorage.getItem("aco_settings_cache")) {
     return <div className="min-h-screen bg-background" />;
-  }
-
-  if (error && !localStorage.getItem("aco_settings_cache")) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6 text-center">
-        <div className="max-w-md space-y-3">
-          <h1 className="font-display text-2xl font-semibold">Server belum terhubung</h1>
-          <p className="text-sm text-muted-foreground">Konfigurasi URL backend Vercel belum benar atau API Render sedang tidak tersedia. Periksa REACT_APP_BACKEND_URL lalu deploy ulang.</p>
-          <button className="text-sm font-semibold underline" onClick={() => window.location.reload()}>Coba lagi</button>
-        </div>
-      </div>
-    );
   }
 
   return (

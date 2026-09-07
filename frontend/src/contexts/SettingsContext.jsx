@@ -46,7 +46,6 @@ export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState(readCachedSettings);
   const [holidays, setHolidaysState] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -54,9 +53,6 @@ export function SettingsProvider({ children }) {
       setSettings(data || {});
       cacheSettings(data || {});
       applyPrimary(data?.primary_color || "#008BFF");
-      setError(null);
-    } catch (e) {
-      setError(e);
     } finally {
       setLoading(false);
     }
@@ -95,7 +91,7 @@ export function SettingsProvider({ children }) {
   };
 
   return (
-    <SettingsCtx.Provider value={{ settings, loading, error, refresh: fetchSettings, update, applyPrimary, holidays, refreshHolidays: fetchHolidays }}>
+    <SettingsCtx.Provider value={{ settings, loading, refresh: fetchSettings, update, applyPrimary, holidays, refreshHolidays: fetchHolidays }}>
       {children}
     </SettingsCtx.Provider>
   );
