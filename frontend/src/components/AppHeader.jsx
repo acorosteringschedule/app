@@ -7,11 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Bell, BellRing, KeyRound, LogOut, Moon, Sun } from "lucide-react";
+import { Bell, BellRing, KeyRound, LogOut, Moon, Sun, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AppHeader({ activeTab, onTab }) {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshMe } = useAuth();
   const { settings } = useSettings();
   const [notes, setNotes] = useState([]);
   const [dark, setDark] = useState(document.documentElement.classList.contains("dark"));
@@ -19,6 +19,8 @@ export default function AppHeader({ activeTab, onTab }) {
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ current_password: "", new_password: "", confirm_password: "" });
   const [passwordSaving, setPasswordSaving] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({ name: user.name || "", current_password: "", new_password: "", confirm_password: "" });
   const seenIdsRef = useRef(new Set());
   const initializedRef = useRef(false);
 
@@ -100,6 +102,21 @@ export default function AppHeader({ activeTab, onTab }) {
     }
   };
 
+  const updateProfile = async () => {
+    setPasswordSaving(true);
+    try {
+      await api.put("/auth/profile", profileForm);
+      await refreshMe();
+      toast.success("Profil admin berhasil diperbarui");
+      setProfileForm({ name: profileForm.name, current_password: "", new_password: "", confirm_password: "" });
+      setProfileOpen(false);
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
   const markRead = async () => {
     await api.post("/notifications/read-all");
     fetchNotes();
@@ -166,7 +183,7 @@ export default function AppHeader({ activeTab, onTab }) {
 
           <Popover onOpenChange={(o) => o && unread && markRead()}>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" data-testid="notification-bell-button" className="relative">
+              <Button variant="ghost" size="icon" data-testid="notification-bell-button" className="relative min-w-10 min-h-10">
                 <Bell size={18} />
                 {unread > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full text-[10px] font-bold text-white flex items-center justify-center px-1" style={{ background: "var(--accent-hex)" }}>
@@ -193,7 +210,7 @@ export default function AppHeader({ activeTab, onTab }) {
             </PopoverContent>
           </Popover>
 
-          <Button variant="ghost" size="icon" data-testid="theme-toggle-button" onClick={toggleTheme}>
+          <Button variant="ghost" size="icon" data-testid="theme-toggle-button" className="min-w-10 min-h-10" onClick={toggleTheme}>
             {dark ? <Sun size={18} /> : <Moon size={18} />}
           </Button>
 
@@ -202,12 +219,17 @@ export default function AppHeader({ activeTab, onTab }) {
               <div className="text-sm font-semibold truncate max-w-[110px]">{user.name}</div>
               <div className="text-[10px] mono uppercase tracking-widest text-muted-foreground truncate">{user.nik} · {user.role}</div>
             </div>
+            {user.role === "admin" && (
+              <Button variant="ghost" size="icon" onClick={() => setProfileOpen(true)} title="Ubah profil admin" data-testid="admin-profile-button">
+                <UserRound size={16} />
+              </Button>
+            )}
             {user.role === "personil" && (
-              <Button variant="ghost" size="icon" onClick={() => setPasswordOpen(true)} title="Ubah password" data-testid="change-password-button">
+              <Button variant="ghost" size="icon" className="min-w-10 min-h-10" onClick={() => setPasswordOpen(true)} title="Ubah password" data-testid="change-password-button">
                 <KeyRound size={16} />
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={() => { logout(); toast.info("Anda telah keluar"); }} data-testid="logout-button">
+            <Button variant="ghost" size="icon" className="min-w-10 min-h-10" onClick={() => { logout(); toast.info("Anda telah keluar"); }} data-testid="logout-button">
               <LogOut size={16} />
             </Button>
           </div>
@@ -245,6 +267,35 @@ export default function AppHeader({ activeTab, onTab }) {
           <DialogFooter>
             <Button variant="outline" onClick={() => setPasswordOpen(false)}>Batal</Button>
             <Button onClick={changePassword} disabled={passwordSaving} className="text-white" style={{ background: "var(--accent-hex)" }}>{passwordSaving ? "Menyimpan..." : "Simpan"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Profil Admin</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs mono uppercase tracking-wider">Nama Akun</label>
+              <Input value={profileForm.name} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })} data-testid="admin-name-input" />
+            </div>
+            <div className="pt-2 border-t">
+              <label className="text-xs mono uppercase tracking-wider">Password Lama</label>
+              <Input type="password" value={profileForm.current_password} onChange={(e) => setProfileForm({ ...profileForm, current_password: e.target.value })} data-testid="admin-current-password-input" />
+            </div>
+            <div>
+              <label className="text-xs mono uppercase tracking-wider">Password Baru</label>
+              <Input type="password" value={profileForm.new_password} onChange={(e) => setProfileForm({ ...profileForm, new_password: e.target.value })} data-testid="admin-new-password-input" />
+            </div>
+            <div>
+              <label className="text-xs mono uppercase tracking-wider">Konfirmasi Password Baru</label>
+              <Input type="password" value={profileForm.confirm_password} onChange={(e) => setProfileForm({ ...profileForm, confirm_password: e.target.value })} data-testid="admin-confirm-password-input" />
+            </div>
+            <p className="text-xs text-muted-foreground">Isi bagian password hanya jika ingin menggantinya. Password baru minimal 6 karakter.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProfileOpen(false)}>Batal</Button>
+            <Button onClick={updateProfile} disabled={passwordSaving} className="text-white" style={{ background: "var(--accent-hex)" }}>{passwordSaving ? "Menyimpan..." : "Simpan"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -91,12 +91,12 @@ export default function DashboardHome() {
         <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/30 to-transparent" />
         <div className="absolute inset-0 grid-overlay opacity-30" />
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full blur-3xl opacity-30" style={{ background: "var(--accent-hex)" }} />
-        <div className={`relative z-10 flex items-center p-6 sm:p-8 lg:p-10 ${hasHeroImage ? "min-h-full" : "min-h-[220px] sm:min-h-[280px] lg:min-h-[320px]"}`}>
+        <div className={`relative z-10 flex items-center p-4 sm:p-8 lg:p-10 ${hasHeroImage ? "min-h-full" : "min-h-[220px] sm:min-h-[280px] lg:min-h-[320px]"}`}>
           <div className="flex-1">
             <div className="inline-flex items-center gap-2 text-[10px] mono uppercase tracking-[0.3em] text-white/70 mb-3">
               <Sparkles size={12} style={{ color: "var(--accent-hex)" }} /> {todayLabel}
             </div>
-            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight">
+            <h1 className="font-display text-2xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight">
               {settings.title || "ACO Shift Scheduler"}
             </h1>
             {settings.subtitle && <p className="mt-3 text-white/70 text-sm sm:text-base max-w-2xl">{settings.subtitle}</p>}
@@ -105,7 +105,7 @@ export default function DashboardHome() {
       </Card>
 
       {/* Top stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           label="Total Personil"
           value={stats?.total_personnel ?? "—"}
@@ -133,12 +133,12 @@ export default function DashboardHome() {
       </div>
 
       {/* Today's shift distribution */}
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <div className="mb-5">
           <h3 className="font-display text-xl font-semibold">Distribusi Shift Hari Ini</h3>
           <p className="text-xs text-muted-foreground mt-1">Ringkasan jumlah personil per shift untuk tanggal hari ini.</p>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" data-testid="today-shift-distribution">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" data-testid="today-shift-distribution">
           <ShiftMiniCard
             label="Shift Pagi"
             count={stats?.today_distribution?.pagi ?? 0}
@@ -179,7 +179,7 @@ export default function DashboardHome() {
       </Card>
 
       {/* Workload bar chart */}
-      <Card className="p-6" data-testid="workload-chart-card">
+      <Card className="p-4 sm:p-6" data-testid="workload-chart-card">
         <div className="flex items-center justify-between mb-5">
           <div>
             <h3 className="font-display text-xl font-semibold flex items-center gap-2">

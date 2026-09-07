@@ -250,6 +250,13 @@ class ChangePasswordBody(BaseModel):
     confirm_password: str
 
 
+class AdminProfileBody(BaseModel):
+    name: str
+    current_password: Optional[str] = None
+    new_password: Optional[str] = None
+    confirm_password: Optional[str] = None
+
+
 class PersonnelBody(BaseModel):
     nik: str
     name: str
@@ -418,6 +425,31 @@ async def change_password(body: ChangePasswordBody, user: dict = Depends(get_cur
         raise HTTPException(400, "Password lama salah")
     await db.users.update_one({"id": user["id"]}, {"$set": {"password_hash": hash_pw(body.new_password)}})
     return {"ok": True}
+
+
+@api.put("/auth/profile")
+async def update_admin_profile(body: AdminProfileBody, admin: dict = Depends(require_admin)):
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(400, "Nama akun wajib diisi")
+
+    update = {"name": name}
+    changing_password = bool(body.new_password or body.confirm_password or body.current_password)
+    if changing_password:
+        if not body.current_password:
+            raise HTTPException(400, "Password lama wajib diisi")
+        if not body.new_password or len(body.new_password) < 6:
+            raise HTTPException(400, "Password baru minimal 6 karakter")
+        if body.new_password != body.confirm_password:
+            raise HTTPException(400, "Konfirmasi password tidak cocok")
+        stored = await db.users.find_one({"id": admin["id"]}, {"password_hash": 1})
+        if not stored or not verify_pw(body.current_password, stored.get("password_hash", "")):
+            raise HTTPException(400, "Password lama salah")
+        update["password_hash"] = hash_pw(body.new_password)
+
+    await db.users.update_one({"id": admin["id"]}, {"$set": update})
+    updated = await db.users.find_one({"id": admin["id"]}, {"_id": 0, "password_hash": 0})
+    return updated
 
 
 # ---------- User / Personnel Endpoints ----------
