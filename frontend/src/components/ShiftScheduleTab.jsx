@@ -30,6 +30,7 @@ const SHIFT_OPTIONS = [
   { value: "penugasan", label: "Penugasan" },
 ];
 const LABEL = { pagi: "P", siang: "S", malam: "M", off: "L", cuti: "C", sakit: "SK", dinas_luar: "DL", diklat: "DK", penugasan: "PN" };
+const SHIFT_TIME = { pagi: "P Pagi 07.00 - 13.00 WIB", siang: "S Siang 13.00 - 19.00 WIB", malam: "M Malam 19.00 - 07.00 WIB" };
 const MONTHS = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 
 function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
@@ -37,12 +38,12 @@ function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
 function ShiftCell({ value, onChange, editable }) {
   const cls = value ? `shift-${value}` : "";
   if (!editable) {
-    return <div className={`shift-cell w-10 h-9 flex items-center justify-center text-xs font-bold rounded ${cls}`}>{LABEL[value] || ""}</div>;
+    return <div title={SHIFT_TIME[value] || value || "Belum diisi"} className={`shift-cell w-10 h-9 flex items-center justify-center text-xs font-bold rounded ${cls}`}>{LABEL[value] || ""}</div>;
   }
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className={`shift-cell w-10 h-9 flex items-center justify-center text-xs font-bold rounded ${cls}`}>{LABEL[value] || "·"}</button>
+        <button title={SHIFT_TIME[value] || value || "Belum diisi"} className={`shift-cell w-10 h-9 flex items-center justify-center text-xs font-bold rounded ${cls}`}>{LABEL[value] || "·"}</button>
       </PopoverTrigger>
       <PopoverContent className="w-40 p-1" align="start">
         <div className="grid grid-cols-2 gap-1">
@@ -202,7 +203,7 @@ export default function ShiftScheduleTab() {
   const autoGenerate = async () => {
     try {
       const { data } = await api.post("/shifts/auto-generate", { year, month, pattern });
-      toast.success(`Berhasil generate ${data.cells} sel`);
+      toast.success(`Berhasil generate ${data.cells} sel${data.protected_cells ? `, ${data.protected_cells} sel pengajuan disetujui dipertahankan` : ""}`);
       setOpenAuto(false);
       load();
     } catch (e) { toast.error(formatApiError(e)); }
@@ -428,7 +429,7 @@ export default function ShiftScheduleTab() {
       </div>
 
       <div className="flex flex-wrap gap-2 text-[11px] mono uppercase tracking-wider">
-        {[["pagi","P Pagi 07-13"],["siang","S Siang 13-19"],["malam","M Malam 19-07"],["off","L Libur"],["cuti","C Cuti"],["sakit","SK Sakit"],["dinas_luar","DL Dinas Luar"],["diklat","DK Diklat"],["penugasan","PN Penugasan"]].map(([k,l]) => (
+          {[['pagi', SHIFT_TIME.pagi], ['siang', SHIFT_TIME.siang], ['malam', SHIFT_TIME.malam], ['off', 'L Libur'], ['cuti', 'C Cuti'], ['sakit', 'SK Sakit'], ['dinas_luar', 'DL Dinas Luar'], ['diklat', 'DK Diklat'], ['penugasan', 'PN Penugasan']].map(([k,l]) => (
           <span key={k} className={`px-2 py-1 rounded shift-${k}`}>{l}</span>
         ))}
       </div>
@@ -437,7 +438,7 @@ export default function ShiftScheduleTab() {
         <DialogContent>
           <DialogHeader><DialogTitle>Auto-Generate Jadwal</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Pilih pola shift untuk periode <b>{MONTHS[month-1]} {year}</b>. Setelah generate, Anda tetap bisa mengedit setiap sel secara manual.</p>
+            <p className="text-sm text-muted-foreground">Pilih pola shift untuk periode <b>{MONTHS[month-1]} {year}</b>. Pengajuan yang sudah disetujui tetap dipertahankan, dan rotasi akan melanjutkan shift kerja dari akhir bulan sebelumnya.</p>
             <div>
               <label className="text-xs mono uppercase tracking-wider">Pola</label>
               <Select value={pattern} onValueChange={setPattern}>

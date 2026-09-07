@@ -587,13 +587,61 @@ async def auto_generate(body: AutoGenerateBody, admin: dict = Depends(require_ad
     if not seq:
         raise HTTPException(400, "Pattern tidak valid")
 
+    start_date = f"{body.year:04d}-{body.month:02d}-01"
+    end_date = f"{body.year:04d}-{body.month:02d}-{ndays:02d}"
+    approved_requests = await db.requests.find({
+        "status": "approved",
+        "start_date": {"$lte": end_date},
+        "end_date": {"$gte": start_date},
+    }, {"_id": 0, "user_id": 1, "type": 1, "start_date": 1, "end_date": 1}).to_list(1000)
+    request_shift = {
+        "cuti_tahunan": "cuti", "cuti_penting": "cuti", "cuti_besar": "cuti",
+        "sakit": "sakit", "dinas_luar": "dinas_luar", "diklat": "diklat", "penugasan": "penugasan",
+    }
+    protected = {}
+    for req in approved_requests:
+        shift = request_shift.get(req["type"])
+        if not shift:
+            continue
+        overlap_start = max(req["start_date"], start_date)
+        overlap_end = min(req["end_date"], end_date)
+        for date in daterange(overlap_start, overlap_end):
+            protected[(req["user_id"], date)] = shift
+
+    previous_month = body.month - 1
+    previous_year = body.year
+    if previous_month == 0:
+        previous_month = 12
+        previous_year -= 1
+    _, previous_days = calendar.monthrange(previous_year, previous_month)
+    previous_shifts = await db.shifts.find({
+        "date": {"$gte": f"{previous_year:04d}-{previous_month:02d}-01", "$lte": f"{previous_year:04d}-{previous_month:02d}-{previous_days:02d}"},
+        "user_id": {"$in": [u["id"] for u in users]},
+    }, {"_id": 0, "user_id": 1, "date": 1, "shift": 1}).sort("date", 1).to_list(10000)
+    previous_by_user = {}
+    for item in previous_shifts:
+        if item["shift"] in seq:
+            previous_by_user[item["user_id"]] = item["shift"]
+
     ops = []
+    protected_count = 0
     for i, u in enumerate(users):
-        offset = (body.start_offsets or {}).get(u["id"], i % len(seq))
+        if body.start_offsets and u["id"] in body.start_offsets:
+            cursor = body.start_offsets[u["id"]] % len(seq)
+        elif u["id"] in previous_by_user:
+            cursor = (seq.index(previous_by_user[u["id"]]) + 1) % len(seq)
+        else:
+            cursor = i % len(seq)
         for d in range(1, ndays + 1):
-            shift = seq[(offset + d - 1) % len(seq)]
             date = f"{body.year:04d}-{body.month:02d}-{d:02d}"
+            key = (u["id"], date)
+            if key in protected:
+                shift = protected[key]
+                protected_count += 1
+            else:
+                shift = seq[cursor]
             ops.append((u["id"], date, shift))
+            cursor = (cursor + 1) % len(seq)
 
     for uid, date, shift in ops:
         await db.shifts.update_one(
@@ -602,7 +650,7 @@ async def auto_generate(body: AutoGenerateBody, admin: dict = Depends(require_ad
             upsert=True,
         )
     await log_change(admin, f"Auto-generate jadwal {body.year}-{body.month:02d} pola {body.pattern}")
-    return {"ok": True, "cells": len(ops)}
+    return {"ok": True, "cells": len(ops), "protected_cells": protected_count}
 
 
 @api.post("/shifts/import-excel")
@@ -726,9 +774,9 @@ async def export_xlsx_template(year: int, month: int, admin: dict = Depends(requ
     ws2["A1"].font = Font(bold=True, size=14)
     legend = [
         ("Kode", "Arti"),
-        ("P atau pagi", "Shift Pagi (07:00-13:00)"),
-        ("S atau siang", "Shift Siang (13:00-19:00)"),
-        ("M atau malam", "Shift Malam (19:00-07:00)"),
+        ("P atau pagi", "Shift Pagi (07.00 - 13.00 WIB)"),
+        ("S atau siang", "Shift Siang (13.00 - 19.00 WIB)"),
+        ("M atau malam", "Shift Malam (19.00 - 07.00 WIB)"),
         ("L atau libur / off", "Libur / Off"),
         ("C atau cuti", "Cuti"),
         ("SK atau sakit", "Sakit"),
@@ -1048,7 +1096,7 @@ async def export_pdf(year: int, month: int, admin: dict = Depends(require_admin)
 
     story.append(Spacer(1, 8 * mm))
     legend_style = ParagraphStyle('l', parent=styles['Normal'], fontSize=8)
-    story.append(Paragraph("Keterangan: P=Pagi (07-13), S=Siang (13-19), M=Malam (19-07), L=Libur, C=Cuti, SK=Sakit, DL=Dinas Luar, DK=Diklat, PN=Penugasan", legend_style))
+    story.append(Paragraph("Keterangan: P=Pagi (07.00 - 13.00 WIB), S=Siang (13.00 - 19.00 WIB), M=Malam (19.00 - 07.00 WIB), L=Libur, C=Cuti, SK=Sakit, DL=Dinas Luar, DK=Diklat, PN=Penugasan", legend_style))
 
     if settings.get("signature_name"):
         story.append(Spacer(1, 15 * mm))
