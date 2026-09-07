@@ -143,17 +143,17 @@ export default function PersonnelTab() {
         </Card>
       )}
 
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h3 className="font-display text-xl font-semibold">Daftar Personil</h3>
-          <p className="text-xs mono uppercase tracking-widest text-muted-foreground mt-1">{users.length} orang · seret di tab jadwal untuk mengubah urutan</p>
+          <p className="text-xs mono uppercase tracking-widest text-muted-foreground mt-1 break-words">{users.length} orang · seret di tab jadwal untuk mengubah urutan</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={downloadTemplate} className="gap-2">
-            <Download size={16} /> Template Excel
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+          <Button variant="outline" onClick={downloadTemplate} className="w-full gap-1.5 px-2 text-xs sm:w-auto sm:gap-2 sm:px-4 sm:text-sm">
+            <Download size={16} /> <span>Template</span><span className="hidden sm:inline"> Excel</span>
           </Button>
-          <label className="inline-flex items-center gap-2 px-3 h-10 rounded-md border cursor-pointer text-sm hover:bg-accent">
-            <FileSpreadsheet size={16} /> {importing ? "Mengimpor..." : "Import Excel"}
+          <label className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border px-2 text-xs hover:bg-accent sm:w-auto sm:gap-2 sm:px-3 sm:text-sm">
+            <FileSpreadsheet size={16} /> {importing ? "Mengimpor..." : <><span>Import</span><span className="hidden sm:inline"> Excel</span></>}
             <input
               type="file"
               accept=".xlsx,.xls"
@@ -162,15 +162,15 @@ export default function PersonnelTab() {
               onChange={(e) => { if (e.target.files[0]) importExcel(e.target.files[0]); e.target.value = ""; }}
             />
           </label>
-          <Button onClick={openNew} className="gap-2 glow-btn text-white" style={{ background: "var(--accent-hex)" }} data-testid="add-personnel-button">
-            <Plus size={16} /> Tambah Personil
+          <Button onClick={openNew} className="col-span-2 w-full gap-2 glow-btn text-white sm:col-span-1 sm:w-auto" style={{ background: "var(--accent-hex)" }} data-testid="add-personnel-button">
+            <Plus size={16} /> <span>Tambah Personil</span>
           </Button>
         </div>
       </div>
-      <p className="text-xs text-muted-foreground">Format Excel: kolom <span className="mono">NIK</span> dan <span className="mono">Nama</span> wajib; <span className="mono">Email</span> opsional. Password awal personil sama dengan NIK.</p>
+      <p className="text-xs leading-relaxed text-muted-foreground">Format Excel: kolom <span className="mono">NIK</span> dan <span className="mono">Nama</span> wajib; <span className="mono">Email</span> opsional. Password awal personil sama dengan NIK.</p>
 
-      <div className="rounded-xl border bg-card overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="w-full overflow-x-auto rounded-xl border bg-card">
+        <table className="min-w-[680px] w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/40 text-left">
               <th className="px-4 py-3 font-semibold">#</th>
