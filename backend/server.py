@@ -19,7 +19,7 @@ from html.parser import HTMLParser
 from urllib.parse import urlparse
 
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, UploadFile, File
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -1017,11 +1017,8 @@ async def get_logs(admin: dict = Depends(require_admin), limit: int = 200):
 
 # ---------- Site Settings ----------
 @api.get("/settings")
-async def get_settings(response: Response):
+async def get_settings():
     s = await db.site_settings.find_one({"id": "singleton"}, {"_id": 0})
-    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Vary"] = "Origin"
     return s or {}
 
 
