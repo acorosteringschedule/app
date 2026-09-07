@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
-import { api } from "@/lib/api";
+import { api, formatApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Bell, BellRing, LogOut, Moon, Sun } from "lucide-react";
+import { Bell, BellRing, KeyRound, LogOut, Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AppHeader({ activeTab, onTab }) {
@@ -14,6 +16,9 @@ export default function AppHeader({ activeTab, onTab }) {
   const [notes, setNotes] = useState([]);
   const [dark, setDark] = useState(document.documentElement.classList.contains("dark"));
   const [permission, setPermission] = useState(typeof Notification !== "undefined" ? Notification.permission : "denied");
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ current_password: "", new_password: "", confirm_password: "" });
+  const [passwordSaving, setPasswordSaving] = useState(false);
   const seenIdsRef = useRef(new Set());
   const initializedRef = useRef(false);
 
@@ -80,6 +85,20 @@ export default function AppHeader({ activeTab, onTab }) {
   };
 
   const unread = notes.filter((n) => !n.read).length;
+
+  const changePassword = async () => {
+    setPasswordSaving(true);
+    try {
+      await api.post("/auth/change-password", passwordForm);
+      toast.success("Password berhasil diubah");
+      setPasswordForm({ current_password: "", new_password: "", confirm_password: "" });
+      setPasswordOpen(false);
+    } catch (e) {
+      toast.error(formatApiError(e));
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
 
   const markRead = async () => {
     await api.post("/notifications/read-all");
@@ -183,6 +202,11 @@ export default function AppHeader({ activeTab, onTab }) {
               <div className="text-sm font-semibold">{user.name}</div>
               <div className="text-[10px] mono uppercase tracking-widest text-muted-foreground">{user.nik} · {user.role}</div>
             </div>
+            {user.role === "personil" && (
+              <Button variant="ghost" size="icon" onClick={() => setPasswordOpen(true)} title="Ubah password" data-testid="change-password-button">
+                <KeyRound size={16} />
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={() => { logout(); toast.info("Anda telah keluar"); }} data-testid="logout-button">
               <LogOut size={16} />
             </Button>
@@ -197,6 +221,31 @@ export default function AppHeader({ activeTab, onTab }) {
           </button>
         ))}
       </div>
+
+      <Dialog open={passwordOpen} onOpenChange={setPasswordOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Ubah Password</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs mono uppercase tracking-wider">Password Lama</label>
+              <Input type="password" value={passwordForm.current_password} onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-xs mono uppercase tracking-wider">Password Baru</label>
+              <Input type="password" value={passwordForm.new_password} onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-xs mono uppercase tracking-wider">Konfirmasi Password Baru</label>
+              <Input type="password" value={passwordForm.confirm_password} onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })} />
+            </div>
+            <p className="text-xs text-muted-foreground">Password baru minimal 6 karakter.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPasswordOpen(false)}>Batal</Button>
+            <Button onClick={changePassword} disabled={passwordSaving} className="text-white" style={{ background: "var(--accent-hex)" }}>{passwordSaving ? "Menyimpan..." : "Simpan"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 }

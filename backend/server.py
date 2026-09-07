@@ -244,6 +244,12 @@ class LoginBody(BaseModel):
     password: str
 
 
+class ChangePasswordBody(BaseModel):
+    current_password: str
+    new_password: str
+    confirm_password: str
+
+
 class PersonnelBody(BaseModel):
     nik: str
     name: str
@@ -399,6 +405,19 @@ async def login(body: LoginBody):
 @api.get("/auth/me")
 async def me(user: dict = Depends(get_current_user)):
     return user
+
+
+@api.post("/auth/change-password")
+async def change_password(body: ChangePasswordBody, user: dict = Depends(get_current_user)):
+    if len(body.new_password) < 6:
+        raise HTTPException(400, "Password baru minimal 6 karakter")
+    if body.new_password != body.confirm_password:
+        raise HTTPException(400, "Konfirmasi password tidak cocok")
+    stored = await db.users.find_one({"id": user["id"]}, {"password_hash": 1})
+    if not stored or not verify_pw(body.current_password, stored.get("password_hash", "")):
+        raise HTTPException(400, "Password lama salah")
+    await db.users.update_one({"id": user["id"]}, {"$set": {"password_hash": hash_pw(body.new_password)}})
+    return {"ok": True}
 
 
 # ---------- User / Personnel Endpoints ----------
