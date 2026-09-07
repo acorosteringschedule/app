@@ -17,6 +17,13 @@ Required values include:
 
 The API URL will look like `https://aco-shift-scheduler-api.onrender.com`.
 
+Use a paid Render instance for the API. The `render.yaml` in this repository sets
+`plan: starter`, which keeps the service running continuously and avoids Free-tier
+cold starts. After pushing or importing this Blueprint, sync the Blueprint in
+Render and confirm the service plan is **Starter**. Render billing must be enabled;
+the YAML change alone cannot upgrade an already-existing service until the
+Blueprint sync is approved.
+
 ## 3. Vercel frontend
 
 Import the repository into Vercel and set the project root to `frontend`. Vercel will use `frontend/vercel.json` and build with `yarn build`.
