@@ -686,7 +686,7 @@ async def import_excel(year: int, month: int, file: UploadFile = File(...), admi
         "sk": "sakit", "sakit": "sakit",
         "dl": "dinas_luar", "dinas_luar": "dinas_luar", "dinasluar": "dinas_luar",
         "dk": "diklat", "diklat": "diklat",
-        "pn": "penugasan", "penugasan": "penugasan",
+        "pn": "penugasan", "tpo": "penugasan", "penugasan": "penugasan",
     }
 
     imported = 0
@@ -782,7 +782,7 @@ async def export_xlsx_template(year: int, month: int, admin: dict = Depends(requ
         ("SK atau sakit", "Sakit"),
         ("DL atau dinas_luar", "Dinas Luar"),
         ("DK atau diklat", "Diklat"),
-        ("PN atau penugasan", "Penugasan"),
+        ("TPO atau penugasan", "Penugasan"),
     ]
     for row in legend:
         ws2.append(list(row))
@@ -1035,7 +1035,7 @@ async def update_settings(body: SiteSettingsBody, admin: dict = Depends(require_
 # ---------- Exports ----------
 SHIFT_LABEL = {
     "pagi": "P", "siang": "S", "malam": "M", "off": "L",
-    "cuti": "C", "sakit": "SK", "dinas_luar": "DL", "diklat": "DK", "penugasan": "PN",
+    "cuti": "C", "sakit": "SK", "dinas_luar": "DL", "diklat": "DK", "penugasan": "TPO",
 }
 SHIFT_HEX = {
     "pagi": colors.HexColor("#7DD3FC"), "siang": colors.HexColor("#FDE68A"), "malam": colors.HexColor("#C4B5FD"),
@@ -1096,7 +1096,7 @@ async def export_pdf(year: int, month: int, admin: dict = Depends(require_admin)
 
     story.append(Spacer(1, 8 * mm))
     legend_style = ParagraphStyle('l', parent=styles['Normal'], fontSize=8)
-    story.append(Paragraph("Keterangan: P=Pagi (07.00 - 13.00 WIB), S=Siang (13.00 - 19.00 WIB), M=Malam (19.00 - 07.00 WIB), L=Libur, C=Cuti, SK=Sakit, DL=Dinas Luar, DK=Diklat, PN=Penugasan", legend_style))
+    story.append(Paragraph("Keterangan: P=Pagi (07.00 - 13.00 WIB), S=Siang (13.00 - 19.00 WIB), M=Malam (19.00 - 07.00 WIB), L=Libur, C=Cuti, SK=Sakit, DL=Dinas Luar, DK=Diklat, TPO=Penugasan", legend_style))
 
     if settings.get("signature_name"):
         story.append(Spacer(1, 15 * mm))

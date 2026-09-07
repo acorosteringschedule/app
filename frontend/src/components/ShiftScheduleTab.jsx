@@ -29,7 +29,7 @@ const SHIFT_OPTIONS = [
   { value: "diklat", label: "Diklat" },
   { value: "penugasan", label: "Penugasan" },
 ];
-const LABEL = { pagi: "P", siang: "S", malam: "M", off: "L", cuti: "C", sakit: "SK", dinas_luar: "DL", diklat: "DK", penugasan: "PN" };
+const LABEL = { pagi: "P", siang: "S", malam: "M", off: "L", cuti: "C", sakit: "SK", dinas_luar: "DL", diklat: "DK", penugasan: "TPO" };
 const SHIFT_TIME = { pagi: "P Pagi 07.00 - 13.00 WIB", siang: "S Siang 13.00 - 19.00 WIB", malam: "M Malam 19.00 - 07.00 WIB" };
 const MONTHS = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 
@@ -237,7 +237,7 @@ export default function ShiftScheduleTab() {
       const a = document.createElement("a");
       a.href = url; a.download = `template_jadwal_${year}_${String(month).padStart(2,"0")}.xlsx`;
       a.click(); URL.revokeObjectURL(url);
-      toast.success("Template diunduh · isi kode P/S/M/L/C/SK/DL/DK/PN lalu import kembali");
+      toast.success("Template diunduh · isi kode P/S/M/L/C/SK/DL/DK/TPO lalu import kembali");
     } catch (e) { toast.error(e.message); }
   };
 
@@ -429,7 +429,7 @@ export default function ShiftScheduleTab() {
       </div>
 
       <div className="flex flex-wrap gap-2 text-[11px] mono uppercase tracking-wider">
-          {[['pagi', SHIFT_TIME.pagi], ['siang', SHIFT_TIME.siang], ['malam', SHIFT_TIME.malam], ['off', 'L Libur'], ['cuti', 'C Cuti'], ['sakit', 'SK Sakit'], ['dinas_luar', 'DL Dinas Luar'], ['diklat', 'DK Diklat'], ['penugasan', 'PN Penugasan']].map(([k,l]) => (
+          {[['pagi', SHIFT_TIME.pagi], ['siang', SHIFT_TIME.siang], ['malam', SHIFT_TIME.malam], ['off', 'L Libur'], ['cuti', 'C Cuti'], ['sakit', 'SK Sakit'], ['dinas_luar', 'DL Dinas Luar'], ['diklat', 'DK Diklat'], ['penugasan', 'TPO Penugasan']].map(([k,l]) => (
           <span key={k} className={`px-2 py-1 rounded shift-${k}`}>{l}</span>
         ))}
       </div>
