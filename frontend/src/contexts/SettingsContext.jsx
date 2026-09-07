@@ -4,6 +4,22 @@ import { setCustomHolidays } from "@/lib/holidays";
 
 const SettingsCtx = createContext(null);
 
+function readCachedSettings() {
+  try {
+    return JSON.parse(localStorage.getItem("aco_settings_cache") || "{}") || {};
+  } catch {
+    return {};
+  }
+}
+
+function cacheSettings(settings) {
+  try {
+    localStorage.setItem("aco_settings_cache", JSON.stringify(settings));
+  } catch {
+    // Large base64 images may exceed browser storage; the API remains the source of truth.
+  }
+}
+
 function hexToHslTriplet(hex) {
   const h = hex.replace("#", "");
   const r = parseInt(h.slice(0, 2), 16) / 255;
@@ -27,7 +43,7 @@ function hexToHslTriplet(hex) {
 }
 
 export function SettingsProvider({ children }) {
-  const [settings, setSettings] = useState({});
+  const [settings, setSettings] = useState(readCachedSettings);
   const [holidays, setHolidaysState] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,6 +51,7 @@ export function SettingsProvider({ children }) {
     try {
       const { data } = await api.get("/settings");
       setSettings(data || {});
+      cacheSettings(data || {});
       applyPrimary(data?.primary_color || "#008BFF");
     } finally {
       setLoading(false);
@@ -50,13 +67,14 @@ export function SettingsProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    applyPrimary(settings.primary_color || "#008BFF");
     fetchSettings();
     fetchHolidays();
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const isDark = localStorage.getItem("aco_theme") === "dark" ||
       (!localStorage.getItem("aco_theme") && mq.matches);
     document.documentElement.classList.toggle("dark", isDark);
-  }, [fetchSettings, fetchHolidays]);
+  }, [fetchSettings, fetchHolidays, settings.primary_color]);
 
   function applyPrimary(hex) {
     document.documentElement.style.setProperty("--accent-hex", hex);
@@ -67,6 +85,7 @@ export function SettingsProvider({ children }) {
   const update = async (patch) => {
     const { data } = await api.put("/settings", patch);
     setSettings(data);
+    cacheSettings(data || {});
     if (patch.primary_color) applyPrimary(patch.primary_color);
     return data;
   };
