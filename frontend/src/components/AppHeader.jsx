@@ -130,8 +130,8 @@ export default function AppHeader({ activeTab, onTab }) {
 
   return (
     <header className="sticky top-0 z-30 border-b glass bg-background/80">
-      <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center gap-4">
-        <div className="flex items-center gap-3">
+      <div className="max-w-[1600px] mx-auto px-2 sm:px-6 min-h-[64px] flex items-center gap-2 sm:gap-4 py-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
           {settings.logo_base64 ? (
             <img src={settings.logo_base64} alt="" className="w-9 h-9 rounded-lg object-contain bg-black p-0.5" />
           ) : (
@@ -157,10 +157,10 @@ export default function AppHeader({ activeTab, onTab }) {
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1 sm:gap-2 shrink-0">
           {permission !== "granted" && (
-            <Button variant="outline" size="sm" onClick={requestPushPermission} className="gap-1.5" data-testid="enable-push-button">
-              <BellRing size={14} /> <span className="hidden sm:inline text-xs">Aktifkan Push</span>
+            <Button variant="outline" size="sm" onClick={requestPushPermission} className="gap-1.5 hidden sm:flex" data-testid="enable-push-button">
+              <BellRing size={14} /> <span className="text-xs">Aktifkan Push</span>
             </Button>
           )}
 
@@ -197,10 +197,10 @@ export default function AppHeader({ activeTab, onTab }) {
             {dark ? <Sun size={18} /> : <Moon size={18} />}
           </Button>
 
-          <div className="hidden sm:flex items-center gap-3 pl-3 border-l">
-            <div className="text-right leading-tight">
-              <div className="text-sm font-semibold">{user.name}</div>
-              <div className="text-[10px] mono uppercase tracking-widest text-muted-foreground">{user.nik} · {user.role}</div>
+          <div className="flex items-center gap-1.5 sm:gap-2 pl-2 sm:pl-3 border-l min-w-0">
+            <div className="hidden sm:block text-right leading-tight min-w-0">
+              <div className="text-sm font-semibold truncate max-w-[110px]">{user.name}</div>
+              <div className="text-[10px] mono uppercase tracking-widest text-muted-foreground truncate">{user.nik} · {user.role}</div>
             </div>
             {user.role === "personil" && (
               <Button variant="ghost" size="icon" onClick={() => setPasswordOpen(true)} title="Ubah password" data-testid="change-password-button">
@@ -214,12 +214,14 @@ export default function AppHeader({ activeTab, onTab }) {
         </div>
       </div>
 
-      <div className="md:hidden overflow-x-auto border-t px-4 py-2 flex gap-1">
-        {tabs.map((t) => (
-          <button key={t} onClick={() => onTab(t)} className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium ${activeTab === t ? "text-white" : "bg-muted text-muted-foreground"}`} style={activeTab === t ? { background: "var(--accent-hex)" } : {}}>
-            {tabLabels[t]}
-          </button>
-        ))}
+      <div className="md:hidden border-t px-2 py-2 overflow-x-auto">
+        <div className="flex min-w-max gap-1.5">
+          {tabs.map((t) => (
+            <button key={t} onClick={() => onTab(t)} className={`whitespace-nowrap px-2.5 py-1.5 rounded-full text-[11px] font-medium ${activeTab === t ? "text-white" : "bg-muted text-muted-foreground"}`} style={activeTab === t ? { background: "var(--accent-hex)" } : {}}>
+              {tabLabels[t]}
+            </button>
+          ))}
+        </div>
       </div>
 
       <Dialog open={passwordOpen} onOpenChange={setPasswordOpen}>
