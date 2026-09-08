@@ -557,6 +557,18 @@ async def get_shifts(year: int, month: int, user: dict = Depends(get_current_use
     return {"year": year, "month": month, "days": ndays, "shifts": shifts}
 
 
+@api.get("/shifts/my")
+async def get_my_shifts(year: int, month: int, user: dict = Depends(get_current_user)):
+    _, ndays = calendar.monthrange(year, month)
+    start = f"{year:04d}-{month:02d}-01"
+    end = f"{year:04d}-{month:02d}-{ndays:02d}"
+    shifts = await db.shifts.find(
+        {"user_id": user["id"], "date": {"$gte": start, "$lte": end}},
+        {"_id": 0, "user_id": 1, "date": 1, "shift": 1},
+    ).sort("date", 1).to_list(500)
+    return {"year": year, "month": month, "days": ndays, "shifts": shifts}
+
+
 @api.post("/shifts/cell")
 async def upsert_cell(body: ShiftCellUpdate, admin: dict = Depends(require_admin)):
     existing = await db.shifts.find_one({"user_id": body.user_id, "date": body.date})

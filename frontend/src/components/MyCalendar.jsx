@@ -13,6 +13,13 @@ const LABEL = { pagi: "Pagi", siang: "Siang", malam: "Malam", off: "Libur", cuti
 const HOURS = { pagi: 6, siang: 6, malam: 12 };
 const SHIFT_TIME = { pagi: "07:00–13:00", siang: "13:00–19:00", malam: "19:00–07:00" };
 
+function localDateIso(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 export default function MyCalendar() {
   const { user } = useAuth();
   const now = new Date();
@@ -21,14 +28,12 @@ export default function MyCalendar() {
   const [shifts, setShifts] = useState({});
 
   useEffect(() => {
-    api.get("/shifts", { params: { year, month } }).then((r) => {
+    api.get("/shifts/my", { params: { year, month } }).then((r) => {
       const map = {};
-      for (const s of r.data.shifts) {
-        if (s.user_id === user.id) map[s.date] = s.shift;
-      }
+      for (const s of r.data.shifts) map[s.date] = s.shift;
       setShifts(map);
-    });
-  }, [year, month, user.id]);
+    }).catch(() => setShifts({}));
+  }, [year, month]);
 
   const nDays = new Date(year, month, 0).getDate();
   const firstDow = new Date(year, month - 1, 1).getDay();
@@ -53,7 +58,7 @@ export default function MyCalendar() {
     for (let i = 0; i < 14; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
-      const iso = d.toISOString().slice(0, 10);
+      const iso = localDateIso(d);
       const s = shifts[iso];
       if (s && s !== "off") list.push({ date: iso, shift: s, dateObj: d });
       if (list.length >= 5) break;
@@ -68,7 +73,7 @@ export default function MyCalendar() {
     setMonth(m); setYear(y);
   };
 
-  const today = now.toISOString().slice(0, 10);
+  const today = localDateIso(now);
   const todayShift = shifts[today];
 
   return (
