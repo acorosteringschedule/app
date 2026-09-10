@@ -1057,7 +1057,7 @@ SHIFT_HEX = {
 
 
 @api.get("/exports/pdf")
-async def export_pdf(year: int, month: int, admin: dict = Depends(require_admin)):
+async def export_pdf(year: int, month: int, user: dict = Depends(get_current_user)):
     _, ndays = calendar.monthrange(year, month)
     start = f"{year:04d}-{month:02d}-01"
     end = f"{year:04d}-{month:02d}-{ndays:02d}"

@@ -241,15 +241,28 @@ export default function ShiftScheduleTab() {
     } catch (e) { toast.error(e.message); }
   };
 
-  const downloadExport = async (kind) => {
+  const downloadPdf = async () => {
     try {
       const token = localStorage.getItem("aco_token");
-      const res = await fetch(`${API_BASE}/exports/${kind}?year=${year}&month=${month}`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${API_BASE}/exports/pdf?year=${year}&month=${month}`, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error("Export gagal");
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = `jadwal_${year}_${String(month).padStart(2,"0")}.${kind === "pdf" ? "pdf" : "xlsx"}`;
+      a.href = url; a.download = `jadwal_${year}_${String(month).padStart(2,"0")}.pdf`;
+      a.click(); URL.revokeObjectURL(url);
+    } catch (e) { toast.error(e.message); }
+  };
+
+  const downloadExcel = async () => {
+    try {
+      const token = localStorage.getItem("aco_token");
+      const res = await fetch(`${API_BASE}/exports/xlsx?year=${year}&month=${month}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) throw new Error("Export Excel gagal");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `jadwal_${year}_${String(month).padStart(2,"0")}.xlsx`;
       a.click(); URL.revokeObjectURL(url);
     } catch (e) { toast.error(e.message); }
   };
@@ -272,6 +285,7 @@ export default function ShiftScheduleTab() {
               <Sparkles size={16} /> Auto-Generate
             </Button>
             <Button variant="outline" className="gap-2" onClick={downloadTemplate} data-testid="download-template-button"><Download size={14} /> Template</Button>
+            <Button variant="outline" className="gap-2" onClick={downloadExcel} data-testid="excel-export-button"><FileSpreadsheet size={14} /> XLSX</Button>
             <label className="inline-flex items-center gap-2 px-3 h-9 rounded-md border cursor-pointer text-sm hover:bg-accent">
               <Upload size={14} /> Import Excel
               <input type="file" accept=".xlsx,.xls" className="hidden" data-testid="excel-import-file-input" onChange={(e) => e.target.files[0] && onImport(e.target.files[0])} />
@@ -287,8 +301,7 @@ export default function ShiftScheduleTab() {
             </Button>
           </>
         )}
-        <Button variant="outline" className="gap-2" onClick={() => downloadExport("xlsx")} data-testid="excel-export-button"><FileSpreadsheet size={14} /> XLSX</Button>
-        <Button variant="outline" className="gap-2" onClick={() => downloadExport("pdf")} data-testid="pdf-export-button"><Download size={14} /> PDF</Button>
+        <Button variant="outline" className="gap-2" onClick={downloadPdf} data-testid="pdf-export-button"><Download size={14} /> PDF</Button>
       </div>
 
       {bulkMode && (

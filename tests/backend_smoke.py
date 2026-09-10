@@ -135,7 +135,7 @@ log("export_pdf", r.status_code == 200 and "pdf" in r.headers.get("content-type"
 # 16. XLSX export
 r = requests.get(f"{BASE}/exports/xlsx", headers=admin_hdr, params={"year": year, "month": month})
 ct = r.headers.get("content-type","").lower()
-log("export_xlsx", r.status_code == 200 and ("spreadsheet" in ct or "excel" in ct or "xlsx" in ct or "octet-stream" in ct), f"{r.status_code} ct={ct}")
+log("export_xlsx_admin", r.status_code == 200 and ("spreadsheet" in ct or "excel" in ct or "xlsx" in ct or "octet-stream" in ct), f"{r.status_code} ct={ct}")
 
 # 17. Reorder users
 r = requests.get(f"{BASE}/users", headers=admin_hdr)
