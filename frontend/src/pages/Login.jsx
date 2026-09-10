@@ -105,6 +105,10 @@ export default function Login() {
           </Card>
         </div>
       </div>
+
+      <div className="six-brothers-logo" aria-label="Six Brothers Garage">
+        SIXBROTHERS GARAGE
+      </div>
     </div>
   );
 }
